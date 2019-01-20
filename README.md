@@ -16,7 +16,6 @@ The objective of this program is to reproduce in Python3 an algorithm that simul
 
 ## How to use
 
-```sh
-pip install -r requirements.txt
+```bash
 python colony_ant_simulator.py
 ```
