@@ -305,6 +305,7 @@ def f_move(canvas, ant_data, food):
 
             canvas.update()
 
-global nb_ant
-nb_ant = int(input("Enter the number of ants you want for the simulation (recommended: 10-100) : "))
-Environment(nb_ant)
+if __name__ == "__main__":
+    global nb_ant
+    nb_ant = int(input("Enter the number of ants you want for the simulation (recommended: 10-100) : "))
+    Environment(nb_ant)
