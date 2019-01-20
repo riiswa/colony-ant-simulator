@@ -1,8 +1,14 @@
 #!/usr/bin/python
 
-from tkinter import *
-from random import randrange, choice
 from copy import copy
+from random import choice, randrange
+from tkinter import *
+
+# Python 2 compatability
+try:
+    input = raw_input
+except NameError:
+    pass
 
 
 class Nest:
@@ -51,6 +57,7 @@ class Ant:
     """the ant object that will search for a food source in an environment
 
     """
+
     def __init__(self, nest, canvas):
         """Birth of an ant in its nest
 
@@ -66,6 +73,7 @@ class Pheromone:
     """Pheromones are objects that help ants in their movement
 
     """
+
     def __init__(self, ant, canvas):
         """The pheromones are placed in the current position of the ant
 
@@ -80,6 +88,7 @@ class Environment:
     """Create the entire environment or a number x of ants will move
 
     """
+
     def __init__(self, ant_number):
         self.ant_number = ant_number
 
@@ -92,7 +101,8 @@ class Environment:
         e_w = 500
         e_h = 500
 
-        self.environment = Canvas(self.root, width=e_w, height=e_h, background="#010326")
+        self.environment = Canvas(
+            self.root, width=e_w, height=e_h, background="#010326")
         self.environment.pack()
 
         # Initialization of the nest
@@ -109,10 +119,12 @@ class Environment:
 
         # All possible combinations of movement for an ant are in this list
         global move_tab
-        move_tab = [(1, 0), (0, 1), (1, 1), (-1, 0), (0, -1), (-1, -1), (1, -1), (-1, 1)]
+        move_tab = [(1, 0), (0, 1), (1, 1), (-1, 0),
+                    (0, -1), (-1, -1), (1, -1), (-1, 1)]
 
         # Initiates the movement of ants in the environment after the creation of the environment
-        self.environment.after(1, f_move(self.environment, self.ant_data, self.food))
+        self.environment.after(
+            1, f_move(self.environment, self.ant_data, self.food))
         self.root.mainloop()
 
 
@@ -179,10 +191,14 @@ def find_nest(ant, canvas):
     BGn = canvas.find_overlapping(0, e_h, ant_coords[0], ant_coords[1])[0]
     BDn = canvas.find_overlapping(e_w, e_h, ant_coords[0], ant_coords[1])[0]
 
-    HG = len(canvas.find_overlapping(0, 0, ant_coords[0], ant_coords[1])) - 2 - nb_ant
-    HD = len(canvas.find_overlapping(e_w, 0, ant_coords[0], ant_coords[1])) - 2 - nb_ant
-    BG = len(canvas.find_overlapping(0, e_h, ant_coords[0], ant_coords[1])) - 2 - nb_ant
-    BD = len(canvas.find_overlapping(e_w, e_h, ant_coords[0], ant_coords[1])) - 2 - nb_ant
+    HG = len(canvas.find_overlapping(
+        0, 0, ant_coords[0], ant_coords[1])) - 2 - nb_ant
+    HD = len(canvas.find_overlapping(
+        e_w, 0, ant_coords[0], ant_coords[1])) - 2 - nb_ant
+    BG = len(canvas.find_overlapping(
+        0, e_h, ant_coords[0], ant_coords[1])) - 2 - nb_ant
+    BD = len(canvas.find_overlapping(
+        e_w, e_h, ant_coords[0], ant_coords[1])) - 2 - nb_ant
 
     new_move_tab = []
     if HGn == 1:
@@ -215,10 +231,14 @@ def pheromones_affinity(ant, canvas):
 
     """
     ant_coords = (ant.posx, ant.posy)
-    HG = len(canvas.find_overlapping(0, 0, ant_coords[0], ant_coords[1])) - (2 + nb_ant)
-    HD = len(canvas.find_overlapping(e_w, 0, ant_coords[0], ant_coords[1])) - (2 + nb_ant)
-    BG = len(canvas.find_overlapping(0, e_h, ant_coords[0], ant_coords[1])) - (2 + nb_ant)
-    BD = len(canvas.find_overlapping(e_w, e_h, ant_coords[0], ant_coords[1])) - (2 + nb_ant)
+    HG = len(canvas.find_overlapping(
+        0, 0, ant_coords[0], ant_coords[1])) - (2 + nb_ant)
+    HD = len(canvas.find_overlapping(
+        e_w, 0, ant_coords[0], ant_coords[1])) - (2 + nb_ant)
+    BG = len(canvas.find_overlapping(
+        0, e_h, ant_coords[0], ant_coords[1])) - (2 + nb_ant)
+    BD = len(canvas.find_overlapping(
+        e_w, e_h, ant_coords[0], ant_coords[1])) - (2 + nb_ant)
     new_move_tab = []
 
     if HG > 1:
@@ -292,7 +312,8 @@ def f_move(canvas, ant_data, food):
                 coord = choice(find_nest(ant, canvas))
                 for i in range(7):
                     # An ant will deposit pheromones on its way with a probability of 1/25.
-                    proba = choice([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+                    proba = choice([0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
                     if proba:
                         pheromones.append(Pheromone(ant, canvas))
                     ant.posx += coord[0]
@@ -305,7 +326,12 @@ def f_move(canvas, ant_data, food):
 
             canvas.update()
 
+
 if __name__ == "__main__":
-    global nb_ant
-    nb_ant = int(input("Enter the number of ants you want for the simulation (recommended: 10-100) : "))
-    Environment(nb_ant)
+    try:
+        nb_ant = int(input(
+            "Enter the number of ants you want for the simulation (recommended: 10-100) : "))
+        Environment(nb_ant)
+    except KeyboardInterrupt:
+        print("Exitting...")
+        exit(0)
