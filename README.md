@@ -21,6 +21,10 @@ The objective of this program is to reproduce in Python3 an algorithm that simul
 python colony_ant_simulator.py
 ```
 
+## Screenshot
+
+![Screenshot](screenshot.gif)
+
 ## Notes
 
 -   This project requires `Tinker`
