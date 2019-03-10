@@ -14,7 +14,7 @@ except NameError:
 STEP_SIZE = 7
 STEP_GRID = ut.cp((-1*STEP_SIZE,0,STEP_SIZE),(-1*STEP_SIZE,0,STEP_SIZE))
 STEP_GRID.remove((0,0))
-print(STEP_GRID)
+
 class Nest:
     """An ant's nest: ants will leave the nest and bring food sources to the nest
 
@@ -152,7 +152,6 @@ def dont_out(ant):
     if not 0<= ant.posx <= e_w or 0 <= ant.posy <= e_h:
         abs_grid = [(pos[0] + ant.posx,pos[1] + ant.posy) for pos in new_move_tab]
         new_move_tab = [(pos[0] - ant.posx,pos[1] - ant.posy) for pos in abs_grid if (0<=pos[0]<=e_w and 0<=pos[1]<=e_h)]
-    print(new_move_tab)
     return new_move_tab
 
 def collide(canvas, ant):
@@ -192,24 +191,24 @@ def find_nest(ant, canvas):
     new_move_tab = []
     if HGn == 1:
         if not HG > 1:
-            new_move_tab += [(-7, 0), (0, -7), (-7, -7)]
+            new_move_tab += [(-1*STEP_SIZE, 0), (0, -STEP_SIZE), (-1*STEP_SIZE, -1*STEP_SIZE)]
         else:
-            new_move_tab += [(-7, 0), (0, -7), (-7, -7)] * HG
+            new_move_tab += [(-1*STEP_SIZE, 0), (0, -STEP_SIZE), (-1*STEP_SIZE, -1*STEP_SIZE)] * HG
     if HDn == 1:
         if not HD > 1:
-            new_move_tab += [(7, 0), (0, -7), (7, -7)]
+            new_move_tab += [(STEP_SIZE, 0), (0, -1*STEP_SIZE), (STEP_SIZE, -1*STEP_SIZE)]
         else:
-            new_move_tab += [(7, 0), (0, -7), (7, -7)] * HD
+            new_move_tab += [(STEP_SIZE, 0), (0, -1*STEP_SIZE), (STEP_SIZE, -1*STEP_SIZE)] * HD
     if BGn == 1:
         if not BG > 1:
-            new_move_tab += [(-7, 0), (0, 7), (-7, 7)]
+            new_move_tab += [(-1*STEP_SIZE, 0), (0, STEP_SIZE), (-1*STEP_SIZE, STEP_SIZE)]
         else:
-            new_move_tab += [(-7, 0), (0, 7), (-7, 7)] * BG
+            new_move_tab += [(-1*STEP_SIZE, 0), (0, STEP_SIZE), (-1*STEP_SIZE, STEP_SIZE)] * BG
     if BDn == 1:
         if not BD > 1:
-            new_move_tab += [(7, 0), (0, 7), (7, 7)]
+            new_move_tab += [(STEP_SIZE, 0), (0, STEP_SIZE), (STEP_SIZE, STEP_SIZE)]
         else:
-            new_move_tab += [(7, 0), (0, 7), (7, 7)] * BD
+            new_move_tab += [(STEP_SIZE, 0), (0, STEP_SIZE), (STEP_SIZE, STEP_SIZE)] * BD
     if len(new_move_tab) > 0:
         return new_move_tab
     return move_tab
@@ -231,16 +230,16 @@ def pheromones_affinity(ant, canvas):
     new_move_tab = []
 
     if HG > 1:
-        new_move_tab += [(-7, 0), (0, -7), (-7, -7)] * HG
+        new_move_tab += [(-1*STEP_SIZE, 0), (0, -1*STEP_SIZE), (-1*STEP_SIZE, -1*STEP_SIZE)] * HG
 
     if HD > 1:
-        new_move_tab += [(7, 0), (0, -7), (7, -7)] * HD
+        new_move_tab += [(STEP_SIZE, 0), (0, -1*STEP_SIZE), (STEP_SIZE, -1*STEP_SIZE)] * HD
 
     if BG > 1:
-        new_move_tab += [(-7, 0), (0, 7), (-7, 7)] * BG
+        new_move_tab += [(-1*STEP_SIZE, 0), (0, STEP_SIZE), (-1*STEP_SIZE, STEP_SIZE)] * BG
 
     if BD > 1:
-        new_move_tab += [(7, 0), (0, 7), (7, 7)] * BD
+        new_move_tab += [(STEP_SIZE, 0), (0, STEP_SIZE), (STEP_SIZE, STEP_SIZE)] * BD
 
     return new_move_tab
 
@@ -274,8 +273,6 @@ def f_move(canvas, ant_data, food):
                         coord = move_tab
                     coord = choice(coord)
 
-                # The ants move in one direction towards 7 pixels
-                #for i in range(7):
                 ant.posx += coord[0]
                 ant.posy += coord[1]
                 canvas.move(ant.display, coord[0], coord[1])
@@ -299,8 +296,6 @@ def f_move(canvas, ant_data, food):
             else:  # If the ant found the food source
                 # The position of the nest will influence the movements of the ant
                 coord = choice(find_nest(ant, canvas))
-                #for i in range(7):
-                    # An ant will deposit pheromones on its way with a probability of 1/25.
                 proba = choice([0]*23+[1])
                 if proba:
                     pheromones.append(Pheromone(ant, canvas))
