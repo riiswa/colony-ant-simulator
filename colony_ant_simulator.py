@@ -124,7 +124,6 @@ class Environment:
         # All possible combinations of movement for an ant are in this list
         global move_tab
         move_tab = STEP_GRID
-        print(move_tab)
 
         # Initiates the movement of ants in the environment after the creation of the environment
         self.environment.after(
