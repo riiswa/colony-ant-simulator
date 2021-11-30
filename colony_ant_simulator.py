@@ -148,9 +148,9 @@ def dont_out(ant):
     """prevent ants from leaving the environment
     """
     new_move_tab = copy(move_tab)
-    if not 0<= ant.posx <= e_w or 0 <= ant.posy <= e_h:
-        abs_grid = [(pos[0] + ant.posx,pos[1] + ant.posy) for pos in new_move_tab]
-        new_move_tab = [(pos[0] - ant.posx,pos[1] - ant.posy) for pos in abs_grid if (0<=pos[0]<=e_w and 0<=pos[1]<=e_h)]
+    #if not 0<= ant.posx <= e_w or 0 <= ant.posy <= e_h:
+    abs_grid = [(pos[0] + ant.posx,pos[1] + ant.posy) for pos in new_move_tab]
+    new_move_tab = [(pos[0] - ant.posx,pos[1] - ant.posy) for pos in abs_grid if (0<=pos[0]<=e_w and 0<=pos[1]<=e_h)]
     return new_move_tab
 
 def collide(canvas, ant):
@@ -263,6 +263,7 @@ def f_move(canvas, ant_data, food):
 
                 # if the ant leaves the environment, we adapt its movements for which it stays there
                 if ant.posx <= 0 or ant.posy <= 0 or ant.posx >= e_w - 1 or ant.posy >= e_h - 1:
+                    #FIXME can't choose from an empty index
                     coord = choice(dont_out(ant))
                 else:
                     # Movement of an ant is adjusted according to the pheromones present. If there is no pheromone,
