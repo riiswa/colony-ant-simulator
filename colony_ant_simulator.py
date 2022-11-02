@@ -1,8 +1,9 @@
 #!/usr/bin/python
 
 import ut
+
 from copy import copy
-from random import choice, randrange
+from random import choice, randrange, randint
 from tkinter import *
 
 # Python 2 compatability
@@ -38,12 +39,13 @@ class Food:
         """Gives a random position to the object and displays it in a tkinter canvas
 
         """
-        self.posx = randrange(50, 450)
-        self.posy = randrange(50, 450)
-        self.display = circle(self.posx, self.posy, 10, canvas, "#04C3D9")
         # a food source with a lifespan of 100 visits
         self.life = 100
-
+                
+        self.posx = randrange(50, 450)
+        self.posy = randrange(50, 450)
+        self.display = circle(self.posx, self.posy, randint(10, 25), canvas, from_rgb(self.life))
+        
     def replace(self, canvas):
         """Relocates the food source to another location when its lifespan reaches 0
 
@@ -106,7 +108,7 @@ class Environment:
         e_h = 500
 
         self.environment = Canvas(
-            self.root, width=e_w, height=e_h, background="#010326")
+            self.root, width=e_w, height=e_h, background="#000028")
         self.environment.pack()
 
         # Initialization of the nest
@@ -142,10 +144,18 @@ def circle(x, y, radius, canvas, color):
     :return: a circle canvas object
     """
     return canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill=color, outline='')
-
-
+    
+def from_rgb(food_life):
+    """translates an rgb tuple of int to a tkinter friendly color code
+    """
+    r = 0
+    g = 2 * food_life
+    b = 2 * food_life
+    
+    return f'#{r:02x}{g:02x}{b:02x}'
+    
 def dont_out(ant):
-    """prevent ants from leaving the environment
+    """prevents ants from leaving the environment
     """
     new_move_tab = copy(move_tab)
     #if not 0<= ant.posx <= e_w or 0 <= ant.posy <= e_h:
@@ -281,11 +291,13 @@ def f_move(canvas, ant_data, food):
                     # if there is a collision between a food source and an ant, the scout mode is removed
                     # with each collision between an ant and a food source, its life expectancy decreases by 1
                     food.life -= 1
-
+                    canvas.itemconfig(food.display, fill=from_rgb(food.life))
+                    
                     # If the food source has been consumed, a new food source is replaced
                     if food.life < 1:
                         food.replace(canvas)
-
+                        canvas.itemconfig(food.display, fill=from_rgb(food.life))
+                    
                     ant.scout_mode = False
                     canvas.itemconfig(ant.display, fill='#3BC302')
 
@@ -313,7 +325,9 @@ def f_move(canvas, ant_data, food):
 if __name__ == "__main__":
     try:
         nb_ant = int(input(
-            "Enter the number of ants you want for the simulation (recommended: 10-100) : "))
+            "Enter the number of ants you want for the simulation (recommended: 10-100) \n "
+            "or left the field black for the random choice: ") or randint(10, 100)
+                     )
         Environment(nb_ant)
     except KeyboardInterrupt:
         print("Exiting...")
