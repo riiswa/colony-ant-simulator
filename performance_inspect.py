@@ -3,19 +3,18 @@
 import ut
 from tkinter import *
 from colony_ant_simulator import *
+import colony_ant_simulator
 
 import cProfile
 import pstats
 
 # TEST PARAMS
-global nb_ant
-nb_ant = 1000
+colony_ant_simulator.nb_ant = 100
 
 profile = cProfile.Profile()
 
 
 def test():
-    ant_number = nb_ant
     root = Tk()
     root.title("Ant Colony Simulator")
     root.bind("<Escape>", lambda quit: root.destroy())
@@ -32,14 +31,14 @@ def test():
 
     # Birth of ants
     ant_data = []  # List contains all ants object
-    for i in range(ant_number):
+    for i in range(colony_ant_simulator.nb_ant):
         ant = Ant(nest, environment)
         ant_data.append(ant)
 
     # Initiates the movement of ants in the environment after the creation of the environment
     # environment.after(
     #     1, f_move(environment, ant_data, food))
-    for i in range(100):
+    for i in range(10000):
         f_move(environment, ant_data, food)
     # root.destroy()
     root.mainloop()

@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import ut
-import sys
 
 from copy import copy
 from random import choice, randrange, randint
@@ -18,10 +17,6 @@ global e_w, e_h, move_tab
 e_w = 500
 e_h = 500
 
-
-# TODO: figure out how to set this if not set
-# if 'nb_ant' not in locals() and 'nb_ant' not in globals():
-#     from performance_inspect import nb_ant
 
 pheromones = []  # list that contains all pheromone objects in the environment
 
@@ -209,7 +204,6 @@ def find_nest(ant, canvas):
     HD = len(HD_o) - 2 - nb_ant
     BG = len(BG_o) - 2 - nb_ant
     BD = len(BD_o) - 2 - nb_ant
-    print(nb_ant)
 
     new_move_tab = []
     if HGn == 1:
@@ -241,7 +235,6 @@ def pheromones_affinity(ant, canvas):
     """Returns a new movement table for which there will be a high probability of approaching pheromones
 
     """
-    # global HG_o, HD_o, BG_o, BD_o
     if pheromones == []:
         return []
     ant_coords = (ant.posx, ant.posy)
