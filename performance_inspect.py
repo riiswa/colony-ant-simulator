@@ -9,7 +9,7 @@ import cProfile
 import pstats
 
 # TEST PARAMS
-colony_ant_simulator.nb_ant = 100
+colony_ant_simulator.nb_ant = 1000
 
 profile = cProfile.Profile()
 
@@ -38,7 +38,7 @@ def test():
     # Initiates the movement of ants in the environment after the creation of the environment
     # environment.after(
     #     1, f_move(environment, ant_data, food))
-    for i in range(10000):
+    for i in range(100):
         f_move(environment, ant_data, food)
     # root.destroy()
     root.mainloop()

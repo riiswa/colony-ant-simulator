@@ -52,11 +52,11 @@ class Food:
         """
         # a food source with a lifespan of 100 visits
         self.life = 100
-                
+
         self.posx = randrange(50, 450)
         self.posy = randrange(50, 450)
         self.display = circle(self.posx, self.posy, randint(10, 25), canvas, from_rgb(self.life))
-        
+
     def replace(self, canvas):
         """Relocates the food source to another location when its lifespan reaches 0
 
@@ -131,11 +131,11 @@ class Environment:
 
         # Initiates the movement of ants in the environment after the creation of the environment
         self.environment.after(
-            1, f_move(self.environment, self.ant_data, self.food))
-        self.move_forever()
+            1, self.move_forever())
         self.root.mainloop()
 
     def move_forever(self):
+        pheromones = []
         while 1:
             f_move(self.environment, self.ant_data, self.food)
 
@@ -152,16 +152,16 @@ def circle(x, y, radius, canvas, color):
     :return: a circle canvas object
     """
     return canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill=color, outline='')
-    
+
 def from_rgb(food_life):
     """translates an rgb tuple of int to a tkinter friendly color code
     """
     r = 0
     g = 2 * food_life
     b = 2 * food_life
-    
+
     return f'#{r:02x}{g:02x}{b:02x}'
-    
+
 def dont_out(ant):
     """prevents ants from leaving the environment
     """
@@ -301,12 +301,12 @@ def f_move(canvas, ant_data, food):
                 # with each collision between an ant and a food source, its life expectancy decreases by 1
                 food.life -= 1
                 canvas.itemconfig(food.display, fill=from_rgb(food.life))
-                
+
                 # If the food source has been consumed, a new food source is replaced
                 if food.life < 1:
                     food.replace(canvas)
                     canvas.itemconfig(food.display, fill=from_rgb(food.life))
-                
+
                 ant.scout_mode = False
                 canvas.itemconfig(ant.display, fill='#3BC302')
 
@@ -328,7 +328,11 @@ def f_move(canvas, ant_data, food):
                 ant.scout_mode = True
                 canvas.itemconfig(ant.display, fill='#AF0220')
 
-    canvas.update()
+        if nb_ant <= 100:
+            canvas.update()
+    if nb_ant > 100:
+        canvas.update()
+
 
 
 if __name__ == "__main__":
