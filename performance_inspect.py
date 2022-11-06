@@ -1,12 +1,7 @@
 #!/usr/bin/python
 
 import ut
-import sys
-
-from copy import copy
-from random import choice, randrange, randint
 from tkinter import *
-
 from colony_ant_simulator import *
 
 import cProfile
