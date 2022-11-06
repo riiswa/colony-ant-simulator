@@ -12,9 +12,20 @@ try:
 except NameError:
     pass
 
+# Environment size
+global e_w, e_h, move_tab
+e_w = 500
+e_h = 500
+
+
+pheromones = []  # list that contains all pheromone objects in the environment
+
 STEP_SIZE = 7
 STEP_GRID = ut.cp((-1*STEP_SIZE,0,STEP_SIZE),(-1*STEP_SIZE,0,STEP_SIZE))
 STEP_GRID.remove((0,0))
+
+# All possible combinations of movement for an ant are in this list
+move_tab = STEP_GRID
 
 class Nest:
     """An ant's nest: ants will leave the nest and bring food sources to the nest
@@ -41,11 +52,11 @@ class Food:
         """
         # a food source with a lifespan of 100 visits
         self.life = 100
-                
+
         self.posx = randrange(50, 450)
         self.posy = randrange(50, 450)
         self.display = circle(self.posx, self.posy, randint(10, 25), canvas, from_rgb(self.life))
-        
+
     def replace(self, canvas):
         """Relocates the food source to another location when its lifespan reaches 0
 
@@ -102,11 +113,6 @@ class Environment:
         self.root.title("Ant Colony Simulator")
         self.root.bind("<Escape>", lambda quit: self.root.destroy())
 
-        # Environment size
-        global e_w, e_h
-        e_w = 500
-        e_h = 500
-
         self.environment = Canvas(
             self.root, width=e_w, height=e_h, background="#000028")
         self.environment.pack()
@@ -123,14 +129,16 @@ class Environment:
             ant = Ant(self.nest, self.environment)
             self.ant_data.append(ant)
 
-        # All possible combinations of movement for an ant are in this list
-        global move_tab
-        move_tab = STEP_GRID
-
         # Initiates the movement of ants in the environment after the creation of the environment
         self.environment.after(
-            1, f_move(self.environment, self.ant_data, self.food))
+            1, self.move_forever())
         self.root.mainloop()
+
+    def move_forever(self):
+        pheromones = []
+        while 1:
+            f_move(self.environment, self.ant_data, self.food)
+
 
 
 def circle(x, y, radius, canvas, color):
@@ -144,16 +152,16 @@ def circle(x, y, radius, canvas, color):
     :return: a circle canvas object
     """
     return canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill=color, outline='')
-    
+
 def from_rgb(food_life):
     """translates an rgb tuple of int to a tkinter friendly color code
     """
     r = 0
     g = 2 * food_life
     b = 2 * food_life
-    
+
     return f'#{r:02x}{g:02x}{b:02x}'
-    
+
 def dont_out(ant):
     """prevents ants from leaving the environment
     """
@@ -183,19 +191,19 @@ def find_nest(ant, canvas):
 
     """
     ant_coords = (ant.posx, ant.posy)
-    HGn = canvas.find_overlapping(0, 0, ant_coords[0], ant_coords[1])[0]
-    HDn = canvas.find_overlapping(e_w, 0, ant_coords[0], ant_coords[1])[0]
-    BGn = canvas.find_overlapping(0, e_h, ant_coords[0], ant_coords[1])[0]
-    BDn = canvas.find_overlapping(e_w, e_h, ant_coords[0], ant_coords[1])[0]
+    HG_o = canvas.find_overlapping(0, 0, ant_coords[0], ant_coords[1])
+    HD_o = canvas.find_overlapping(e_w, 0, ant_coords[0], ant_coords[1])
+    BG_o = canvas.find_overlapping(0, e_h, ant_coords[0], ant_coords[1])
+    BD_o = canvas.find_overlapping(e_w, e_h, ant_coords[0], ant_coords[1])
+    HGn = HG_o[0]
+    HDn = HD_o[0]
+    BGn = BG_o[0]
+    BDn = BD_o[0]
 
-    HG = len(canvas.find_overlapping(
-        0, 0, ant_coords[0], ant_coords[1])) - 2 - nb_ant
-    HD = len(canvas.find_overlapping(
-        e_w, 0, ant_coords[0], ant_coords[1])) - 2 - nb_ant
-    BG = len(canvas.find_overlapping(
-        0, e_h, ant_coords[0], ant_coords[1])) - 2 - nb_ant
-    BD = len(canvas.find_overlapping(
-        e_w, e_h, ant_coords[0], ant_coords[1])) - 2 - nb_ant
+    HG = len(HG_o) - 2 - nb_ant
+    HD = len(HD_o) - 2 - nb_ant
+    BG = len(BG_o) - 2 - nb_ant
+    BD = len(BD_o) - 2 - nb_ant
 
     new_move_tab = []
     if HGn == 1:
@@ -227,15 +235,18 @@ def pheromones_affinity(ant, canvas):
     """Returns a new movement table for which there will be a high probability of approaching pheromones
 
     """
+    if pheromones == []:
+        return []
     ant_coords = (ant.posx, ant.posy)
-    HG = len(canvas.find_overlapping(
-        0, 0, ant_coords[0], ant_coords[1])) - (2 + nb_ant)
-    HD = len(canvas.find_overlapping(
-        e_w, 0, ant_coords[0], ant_coords[1])) - (2 + nb_ant)
-    BG = len(canvas.find_overlapping(
-        0, e_h, ant_coords[0], ant_coords[1])) - (2 + nb_ant)
-    BD = len(canvas.find_overlapping(
-        e_w, e_h, ant_coords[0], ant_coords[1])) - (2 + nb_ant)
+
+    HG_o = canvas.find_overlapping(0, 0, ant_coords[0], ant_coords[1])
+    HD_o = canvas.find_overlapping(e_w, 0, ant_coords[0], ant_coords[1])
+    BG_o = canvas.find_overlapping(0, e_h, ant_coords[0], ant_coords[1])
+    BD_o = canvas.find_overlapping(e_w, e_h, ant_coords[0], ant_coords[1])
+    HG = len(HG_o) - (2 + nb_ant)
+    HD = len(HD_o) - (2 + nb_ant)
+    BG = len(BG_o) - (2 + nb_ant)
+    BD = len(BD_o) - (2 + nb_ant)
     new_move_tab = []
 
     if HG > 1:
@@ -257,69 +268,71 @@ def f_move(canvas, ant_data, food):
     """simulates the movement of an ant
 
     """
-    pheromones = []  # list that contains all pheromone objects in the environment
 
-    while 1:
-        for pheromone in pheromones:
-            # At each loop the life expectancy of pheromones decreases by 1
-            pheromone.life -= 1
-            if pheromone.life <= 0:  # If the life expectancy of a pheromone reaches 0 it is removed
-                canvas.delete(pheromone.display)
-                pheromones.remove(pheromone)
+    for pheromone in pheromones:
+        # At each loop the life expectancy of pheromones decreases by 1
+        pheromone.life -= 1
+        if pheromone.life <= 0:  # If the life expectancy of a pheromone reaches 0 it is removed
+            canvas.delete(pheromone.display)
+            pheromones.remove(pheromone)
 
-        for ant in ant_data:
-            # Movement of ants
-            if ant.scout_mode:  # if the ant is looking for a food source
+    for ant in ant_data:
+        # Movement of ants
+        if ant.scout_mode:  # if the ant is looking for a food source
 
-                # if the ant leaves the environment, we adapt its movements for which it stays there
-                if ant.posx <= 0 or ant.posy <= 0 or ant.posx >= e_w - 1 or ant.posy >= e_h - 1:
-                    #FIXME can't choose from an empty index
-                    coord = choice(dont_out(ant))
-                else:
-                    # Movement of an ant is adjusted according to the pheromones present. If there is no pheromone,
-                    # there will be no modification on its movement.
-                    coord = pheromones_affinity(ant, canvas)
-                    if not coord:
-                        coord = move_tab
-                    coord = choice(coord)
+            # if the ant leaves the environment, we adapt its movements for which it stays there
+            if ant.posx <= 0 or ant.posy <= 0 or ant.posx >= e_w - 1 or ant.posy >= e_h - 1:
+                #FIXME can't choose from an empty index
+                coord = choice(dont_out(ant))
+            else:
+                # Movement of an ant is adjusted according to the pheromones present. If there is no pheromone,
+                # there will be no modification on its movement.
+                coord = pheromones_affinity(ant, canvas)
+                if not coord:
+                    coord = move_tab
+                coord = choice(coord)
 
-                ant.posx += coord[0]
-                ant.posy += coord[1]
-                canvas.move(ant.display, coord[0], coord[1])
+            ant.posx += coord[0]
+            ant.posy += coord[1]
+            canvas.move(ant.display, coord[0], coord[1])
 
-                if collide(canvas, ant) == 2:
-                    # if there is a collision between a food source and an ant, the scout mode is removed
-                    # with each collision between an ant and a food source, its life expectancy decreases by 1
-                    food.life -= 1
+            if collide(canvas, ant) == 2:
+                # if there is a collision between a food source and an ant, the scout mode is removed
+                # with each collision between an ant and a food source, its life expectancy decreases by 1
+                food.life -= 1
+                canvas.itemconfig(food.display, fill=from_rgb(food.life))
+
+                # If the food source has been consumed, a new food source is replaced
+                if food.life < 1:
+                    food.replace(canvas)
                     canvas.itemconfig(food.display, fill=from_rgb(food.life))
-                    
-                    # If the food source has been consumed, a new food source is replaced
-                    if food.life < 1:
-                        food.replace(canvas)
-                        canvas.itemconfig(food.display, fill=from_rgb(food.life))
-                    
-                    ant.scout_mode = False
-                    canvas.itemconfig(ant.display, fill='#3BC302')
 
-                    # the ant puts down its first pheromones when it touches food
-                    for i in range(30):
-                        pheromones.append(Pheromone(ant, canvas))
+                ant.scout_mode = False
+                canvas.itemconfig(ant.display, fill='#3BC302')
 
-            else:  # If the ant found the food source
-                # The position of the nest will influence the movements of the ant
-                coord = choice(find_nest(ant, canvas))
-                proba = choice([0]*23+[1])
-                if proba:
+                # the ant puts down its first pheromones when it touches food
+                for i in range(30):
                     pheromones.append(Pheromone(ant, canvas))
-                ant.posx += coord[0]
-                ant.posy += coord[1]
-                canvas.move(ant.display, coord[0], coord[1])
-                # if there is a collision between a nest and an ant, the ant switches to scout mode
-                if collide(canvas, ant) == 1:
-                    ant.scout_mode = True
-                    canvas.itemconfig(ant.display, fill='#AF0220')
 
+        else:  # If the ant found the food source
+            # The position of the nest will influence the movements of the ant
+            coord = choice(find_nest(ant, canvas))
+            proba = choice([0]*23+[1])
+            if proba:
+                pheromones.append(Pheromone(ant, canvas))
+            ant.posx += coord[0]
+            ant.posy += coord[1]
+            canvas.move(ant.display, coord[0], coord[1])
+            # if there is a collision between a nest and an ant, the ant switches to scout mode
+            if collide(canvas, ant) == 1:
+                ant.scout_mode = True
+                canvas.itemconfig(ant.display, fill='#AF0220')
+
+        if nb_ant <= 100:
             canvas.update()
+    if nb_ant > 100:
+        canvas.update()
+
 
 
 if __name__ == "__main__":
