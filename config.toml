@@ -1,5 +1,12 @@
-environment.width = 500
-environment.height = 500
+[environment]
+width = 500
+height = 500
+
+[ant]
+stepsize = 7
+
+[pheromone]
+lifeexpectancy = 30
 
 [graphics]
 environment.backgroundcolour = "#000028"
@@ -10,3 +17,4 @@ ant.scouting_colour = "#AF0220"
 ant.notscouting_colour = "#3BC302"
 pheromone.radius = 0.1
 pheromone.colour = "#050994"
+

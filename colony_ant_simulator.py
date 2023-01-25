@@ -7,12 +7,6 @@ from random import choice, randrange, randint
 from tkinter import *
 import tomllib
 
-# Python 2 compatability
-try:
-    input = raw_input
-except NameError:
-    pass
-
 # Load configuration
 with open("config.toml", mode="rb") as fp:
     _CONFIG_ = tomllib.load(fp)
@@ -25,7 +19,7 @@ e_h = _CONFIG_['environment']['height']
 
 pheromones = []  # list that contains all pheromone objects in the environment
 
-STEP_SIZE = 7
+STEP_SIZE = _CONFIG_['ant']['stepsize']
 STEP_GRID = ut.cp((-1*STEP_SIZE,0,STEP_SIZE),(-1*STEP_SIZE,0,STEP_SIZE))
 STEP_GRID.remove((0,0))
 
@@ -102,7 +96,7 @@ class Pheromone:
         """
         self.posx = ant.posx
         self.posy = ant.posy
-        self.life = 100  # Life expectancy of the pheromone which expires after a certain time
+        self.life = _CONFIG_['pheromone']['lifeexpectancy'] # Life expectancy of the pheromone which expires after a certain time
         self.display = circle(self.posx, self.posy, _CONFIG_['graphics']['pheromone']['radius'], canvas, _CONFIG_['graphics']['pheromone']['colour'])
 
 
@@ -140,7 +134,6 @@ class Environment:
         self.root.mainloop()
 
     def move_forever(self):
-        pheromones = []
         while 1:
             f_move(self.environment, self.ant_data, self.food)
 
@@ -343,7 +336,7 @@ if __name__ == "__main__":
     try:
         nb_ant = int(input(
             "Enter the number of ants you want for the simulation (recommended: 10-100) \n "
-            "or left the field black for the random choice: ") or randint(10, 100)
+            "or leave the field blank for a random choice: ") or randint(10, 100)
                      )
         Environment(nb_ant)
     except KeyboardInterrupt:
