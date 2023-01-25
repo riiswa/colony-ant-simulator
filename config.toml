@@ -1,0 +1,12 @@
+environment.width = 500
+environment.height = 500
+
+[graphics]
+environment.backgroundcolour = "#000028"
+nest.radius = 20
+nest.colour = "#F27E1D"
+ant.radius = 2
+ant.scouting_colour = "#AF0220"
+ant.notscouting_colour = "#3BC302"
+pheromone.radius = 0.1
+pheromone.colour = "#050994"

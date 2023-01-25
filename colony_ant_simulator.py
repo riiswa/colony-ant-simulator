@@ -5,6 +5,7 @@ import ut
 from copy import copy
 from random import choice, randrange, randint
 from tkinter import *
+import tomllib
 
 # Python 2 compatability
 try:
@@ -12,10 +13,14 @@ try:
 except NameError:
     pass
 
+# Load configuration
+with open("config.toml", mode="rb") as fp:
+    _CONFIG_ = tomllib.load(fp)
+
 # Environment size
 global e_w, e_h, move_tab
-e_w = 500
-e_h = 500
+e_w = _CONFIG_['environment']['width']
+e_h = _CONFIG_['environment']['height']
 
 
 pheromones = []  # list that contains all pheromone objects in the environment
@@ -38,7 +43,7 @@ class Nest:
         """
         self.posx = randrange(50, 450)
         self.posy = randrange(50, 450)
-        self.display = circle(self.posx, self.posy, 20, canvas, "#F27E1D")
+        self.display = circle(self.posx, self.posy, _CONFIG_['graphics']['nest']['radius'], canvas, _CONFIG_['graphics']['nest']['colour'])
 
 
 class Food:
@@ -81,7 +86,7 @@ class Ant:
         """
         self.posx = nest.posx
         self.posy = nest.posy
-        self.display = circle(self.posx, self.posy, 2, canvas, "#AF0220")
+        self.display = circle(self.posx, self.posy, _CONFIG_['graphics']['ant']['radius'], canvas, _CONFIG_['graphics']['ant']['scouting_colour'])
         # at birth the ant is in a search mode
         self.scout_mode = True
 
@@ -98,7 +103,7 @@ class Pheromone:
         self.posx = ant.posx
         self.posy = ant.posy
         self.life = 100  # Life expectancy of the pheromone which expires after a certain time
-        self.display = circle(self.posx, self.posy, 0.1, canvas, "#050994")
+        self.display = circle(self.posx, self.posy, _CONFIG_['graphics']['pheromone']['radius'], canvas, _CONFIG_['graphics']['pheromone']['colour'])
 
 
 class Environment:
@@ -114,7 +119,7 @@ class Environment:
         self.root.bind("<Escape>", lambda quit: self.root.destroy())
 
         self.environment = Canvas(
-            self.root, width=e_w, height=e_h, background="#000028")
+            self.root, width=e_w, height=e_h, background=_CONFIG_['graphics']['environment']['backgroundcolour'])
         self.environment.pack()
 
         # Initialization of the nest
@@ -306,9 +311,8 @@ def f_move(canvas, ant_data, food):
                 if food.life < 1:
                     food.replace(canvas)
                     canvas.itemconfig(food.display, fill=from_rgb(food.life))
-
                 ant.scout_mode = False
-                canvas.itemconfig(ant.display, fill='#3BC302')
+                canvas.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['notscouting_colour'])
 
                 # the ant puts down its first pheromones when it touches food
                 for i in range(30):
@@ -326,7 +330,7 @@ def f_move(canvas, ant_data, food):
             # if there is a collision between a nest and an ant, the ant switches to scout mode
             if collide(canvas, ant) == 1:
                 ant.scout_mode = True
-                canvas.itemconfig(ant.display, fill='#AF0220')
+                canvas.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['scouting_colour'])
 
         if nb_ant <= 100:
             canvas.update()
