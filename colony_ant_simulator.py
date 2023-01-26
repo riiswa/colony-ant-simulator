@@ -114,7 +114,12 @@ class Environment:
 
         self.environment = Canvas(
             self.root, width=e_w, height=e_h, background=_CONFIG_['graphics']['environment']['backgroundcolour'])
-        self.environment.pack()
+        self.environment.grid(column=0, row=0, columnspan=4)
+        
+        # Setup status bar
+        self.status_vars = [StringVar() for i in range (4)]
+        _ = [var.set(f'Initialization ({i}) ...') for i, var in enumerate(self.status_vars)]
+        _ = [Label(self.root, textvariable=var).grid(column=i, row=1, sticky='nw') for i, var in enumerate(self.status_vars)]
 
         # Initialization of the nest
         self.nest = Nest(self.environment)
@@ -135,7 +140,7 @@ class Environment:
 
     def move_forever(self):
         while 1:
-            f_move(self.environment, self.ant_data, self.food)
+            f_move(self.environment, self.ant_data, self.food, self.status_vars)
 
 
 
@@ -262,11 +267,11 @@ def pheromones_affinity(ant, canvas):
     return new_move_tab
 
 
-def f_move(canvas, ant_data, food):
+def f_move(canvas, ant_data, food, status_vars):
     """simulates the movement of an ant
 
     """
-
+    
     for pheromone in pheromones:
         # At each loop the life expectancy of pheromones decreases by 1
         pheromone.life -= 1
@@ -329,7 +334,12 @@ def f_move(canvas, ant_data, food):
             canvas.update()
     if nb_ant > 100:
         canvas.update()
-
+    
+    # Refresh status bar
+    status_vars[0].set(f'Ants: {len(ant_data)}')
+    status_vars[1].set(f'Food left: {food.life}')
+    status_vars[2].set(f'Pheromones: {len(pheromones)}')
+    status_vars[3].set('')
 
 
 if __name__ == "__main__":
