@@ -27,4 +27,6 @@ python colony_ant_simulator.py
 
 ## Notes
 
--   This project requires `Tinker`
+-   This project requires `Tinker
+
+Require Python3.11
