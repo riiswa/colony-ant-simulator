@@ -99,7 +99,7 @@ class Pheromone:
         """
         self.posx = ant.posx
         self.posy = ant.posy
-        self.life = _CONFIG_['pheromone']['lifeexpectancy'] # Life expectancy of the pheromone which expires after a certain time
+        self.life = _CONFIG_['pheromone']['persistence'] # Life expectancy of the pheromone which expires after a certain time
         self.display = circle(self.posx, self.posy, _CONFIG_['graphics']['pheromone']['radius'], canvas, _CONFIG_['graphics']['pheromone']['colour'])
 
 
@@ -315,8 +315,9 @@ def f_move(canvas, ant_data, food, status_vars):
                 canvas.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['notscouting_colour'])
 
                 # the ant puts down its first pheromones when it touches food
-                for i in range(30):
-                    pheromones.append(Pheromone(ant, canvas))
+                _ = [pheromones.append(Pheromone(ant, canvas))
+                     for i in range(_CONFIG_['pheromone']['qty_ph_upon_foodfind'])]
+                    
 
         else:  # If the ant found the food source
             # The position of the nest will influence the movements of the ant
@@ -327,7 +328,7 @@ def f_move(canvas, ant_data, food, status_vars):
             ant.posx += coord[0]
             ant.posy += coord[1]
             canvas.move(ant.display, coord[0], coord[1])
-            # if there is a collision between a nest and an ant, the ant switches to scout mode
+            # Ant at nest: if there is a collision between a nest and an ant, the ant switches to scout mode
             if collide(canvas, ant) == 1:
                 ant.scout_mode = True
                 canvas.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['scouting_colour'])

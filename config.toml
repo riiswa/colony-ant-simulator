@@ -6,7 +6,8 @@ height = 500
 stepsize = 7
 
 [pheromone]
-lifeexpectancy = 30
+persistence = 30
+qty_ph_upon_foodfind = 30
 
 [graphics]
 ant.radius = 2
