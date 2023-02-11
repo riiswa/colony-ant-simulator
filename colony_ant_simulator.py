@@ -74,20 +74,25 @@ class Food:
 
 
 class Ant:
-    """the ant object that will search for a food source in an environment
-
+    """The ant object that will search for a food source in an environment.
+    With an initial energy of 10, and ant can make 1000 steps before dying.
     """
 
     def __init__(self, nest, canvas):
         """Birth of an ant in its nest
 
         """
+        self.canvas = canvas
         self.posx = nest.posx
         self.posy = nest.posy
-        self.display = circle(self.posx, self.posy, _CONFIG_['graphics']['ant']['radius'], canvas, _CONFIG_['graphics']['ant']['scouting_colour'])
-        # at birth the ant is in a search mode
-        self.scout_mode = True
-        self.energy = 100
+        self.display = circle(self.posx, self.posy, _CONFIG_['graphics']['ant']['radius'], self.canvas, _CONFIG_['graphics']['ant']['scouting_colour'])
+        self.scout_mode = True # at birth the ant is in a search mode
+        self.energy = _CONFIG_['ant']['ini_energy']
+    
+    def remove_from_display(self):
+        """ Delete the ant from the canvas.
+        """
+        self.canvas.delete(self.display)
 
 
 class Pheromone:
@@ -112,6 +117,7 @@ class Environment:
     def __init__(self, ant_number, sim_mode):
         self.ant_number = ant_number
         self.sim_mode = sim_mode
+        self.sim_loop = 0
 
         self.root = Tk()
         self.root.title("Ant Colony Simulator")
@@ -122,8 +128,8 @@ class Environment:
         self.environment.grid(column=0, row=0, columnspan=4)
         
         # Setup status bar
-        self.status_vars = [StringVar() for i in range (4)]
-        _ = [var.set(f'Initialization ({i}) ...') for i, var in enumerate(self.status_vars)]
+        self.status_vars = [StringVar() for i in range (6)]
+        _ = [var.set(f'Ini ({i}) ...') for i, var in enumerate(self.status_vars)]
         _ = [Label(self.root, textvariable=var).grid(column=i, row=1, sticky='nw') for i, var in enumerate(self.status_vars)]
 
         # Initialization of the nest
@@ -147,7 +153,8 @@ class Environment:
     def f_move(self):
         """Simulates the movements ants
         """
-        
+        self.sim_loop += 1
+
         for pheromone in pheromones:
             # At each loop the life expectancy of pheromones decreases by 1
             pheromone.life -= 1
@@ -155,18 +162,29 @@ class Environment:
                 self.environment.delete(pheromone.display)
                 pheromones.remove(pheromone)
 
+        # New ants generated if enough food reserves
+        if self.nest.food_storage > _CONFIG_['ant']['energy_to_create_new_ant']:
+            number_new_ants = int(self.nest.food_storage // _CONFIG_['ant']['energy_to_create_new_ant'])
+            self.ant_data = self.ant_data + [Ant(self.nest, self.environment) for i in range(number_new_ants)]
+            self.nest.food_storage -= number_new_ants * _CONFIG_['ant']['energy_to_create_new_ant']
+            print(f'Welcoming {number_new_ants} new ants to the colony.')
+
+        # Check if we have any ant still alive...
         if len(self.ant_data) == 0:
             print("All ants have died and the colony didn't survive a tragical famine.\nExiting...")
             exit(0)
+        nb_ants_before_famine = len(self.ant_data)
 
         for ant in self.ant_data:
+
             # Ant energy depletes if simulation mode = reality
-            # An ant dies from starvation if their energy goes <= 0
             if sim_args.mode == 'reality':
-                ant.energy -= 0.1
+                ant.energy -= 0.01
                 if ant.energy <= 0:
-                    self.ant_data = [an_ant for an_ant in self.ant_data if an_ant!=ant]
+                    ant.remove_from_display()
+                    self.ant_data = [an_ant for an_ant in self.ant_data if an_ant is not ant]
                     continue
+            
 
             # Movement of ants
             if ant.scout_mode:  # if the ant is looking for a food source
@@ -219,17 +237,34 @@ class Environment:
                 if collide(self.environment, ant) == 1:
                     ant.scout_mode = True
                     self.environment.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['scouting_colour'])
+                    
+                    # Ant eats energy from the nest
+                    desired_energy_topup = _CONFIG_['ant']['ini_energy'] - ant.energy
+                    actual_energy_topup = min(desired_energy_topup, self.nest.food_storage)
+                    ant.energy += actual_energy_topup # Ant restore their enrgy thanks to the nest
+                    self.nest.food_storage -= actual_energy_topup
 
-            if sim_args.n_ants<= 100:
+            if len(self.ant_data)<= 100:
                 self.environment.update()
-        if sim_args.n_ants > 100:
+        
+        nb_ants_died = nb_ants_before_famine - len(self.ant_data)
+        if nb_ants_died > 0:
+            print(f'{nb_ants_died} have died of starvation')
+                
+        if len(self.ant_data) > 100:
             self.environment.update()
         
         # Refresh status bar
-        self.status_vars[0].set(f'Ants: {len(self.ant_data)}')
-        self.status_vars[1].set(f'Food left: {self.food.life}')
-        self.status_vars[2].set(f'Pheromones: {len(pheromones)}')
-        self.status_vars[3].set('')
+        if len(self.ant_data)>0:
+            avg_energy = sum([an_ant.energy for an_ant in self.ant_data])/len(self.ant_data)
+        else:
+            avg_energy = 0
+        self.status_vars[0].set(f'Loop {self.sim_loop}')
+        self.status_vars[1].set(f'Ants: {len(self.ant_data)}')
+        self.status_vars[2].set(f'Energy/ant: {avg_energy:.2f}')
+        self.status_vars[3].set(f'Food reserve: {self.nest.food_storage:.2f}')
+        self.status_vars[4].set(f'Unpicked food: {self.food.life}')
+        self.status_vars[5].set(f'Pheromones: {len(pheromones)}')
 
 
 

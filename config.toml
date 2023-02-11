@@ -1,12 +1,14 @@
 [ant]
-stepsize = 7
+stepsize = 5
+ini_energy = 10
+energy_to_create_new_ant = 50
 
 [environment]
 width = 500
 height = 500
 
 [nest]
-ini_foodqty = 100
+ini_foodqty = 1000
 
 [pheromone]
 persistence = 30
