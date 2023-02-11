@@ -41,6 +41,7 @@ class Nest:
         self.posx = randrange(50, 450)
         self.posy = randrange(50, 450)
         self.display = circle(self.posx, self.posy, _CONFIG_['graphics']['nest']['radius'], canvas, _CONFIG_['graphics']['nest']['colour'])
+        self.food_storage = _CONFIG_['nest']['ini_foodqty']
 
 
 class Food:
@@ -86,6 +87,7 @@ class Ant:
         self.display = circle(self.posx, self.posy, _CONFIG_['graphics']['ant']['radius'], canvas, _CONFIG_['graphics']['ant']['scouting_colour'])
         # at birth the ant is in a search mode
         self.scout_mode = True
+        self.energy = 100
 
 
 class Pheromone:
@@ -105,11 +107,11 @@ class Pheromone:
 
 class Environment:
     """Create the entire environment or a number x of ants will move
-
     """
 
-    def __init__(self, ant_number):
+    def __init__(self, ant_number, sim_mode):
         self.ant_number = ant_number
+        self.sim_mode = sim_mode
 
         self.root = Tk()
         self.root.title("Ant Colony Simulator")
@@ -130,11 +132,8 @@ class Environment:
         # Initialization of the food
         self.food = Food(self.environment)
 
-        # Birth of ants
-        self.ant_data = []  # List contains all ants object
-        for i in range(self.ant_number):
-            ant = Ant(self.nest, self.environment)
-            self.ant_data.append(ant)
+        # Birth of ants - List contains all ants object
+        self.ant_data = [Ant(self.nest, self.environment) for i in range(self.ant_number)] 
 
         # Initiates the movement of ants in the environment after the creation of the environment
         self.environment.after(
@@ -143,7 +142,94 @@ class Environment:
 
     def move_forever(self):
         while 1:
-            f_move(self.environment, self.ant_data, self.food, self.status_vars)
+            self.f_move()
+    
+    def f_move(self):
+        """Simulates the movements ants
+        """
+        
+        for pheromone in pheromones:
+            # At each loop the life expectancy of pheromones decreases by 1
+            pheromone.life -= 1
+            if pheromone.life <= 0:  # If the life expectancy of a pheromone reaches 0 it is removed
+                self.environment.delete(pheromone.display)
+                pheromones.remove(pheromone)
+
+        if len(self.ant_data) == 0:
+            print("All ants have died and the colony didn't survive a tragical famine.\nExiting...")
+            exit(0)
+
+        for ant in self.ant_data:
+            # Ant energy depletes if simulation mode = reality
+            # An ant dies from starvation if their energy goes <= 0
+            if sim_args.mode == 'reality':
+                ant.energy -= 0.1
+                if ant.energy <= 0:
+                    self.ant_data = [an_ant for an_ant in self.ant_data if an_ant!=ant]
+                    continue
+
+            # Movement of ants
+            if ant.scout_mode:  # if the ant is looking for a food source
+
+                # if the ant leaves the environment, we adapt its movements for which it stays there
+                if ant.posx <= 0 or ant.posy <= 0 or ant.posx >= e_w - 1 or ant.posy >= e_h - 1:
+                    #FIXME can't choose from an empty index
+                    coord = choice(dont_out(ant))
+                else:
+                    # Movement of an ant is adjusted according to the pheromones present. If there is no pheromone,
+                    # there will be no modification on its movement.
+                    coord = pheromones_affinity(ant, self.environment)
+                    if not coord:
+                        coord = move_tab
+                    coord = choice(coord)
+
+                ant.posx += coord[0]
+                ant.posy += coord[1]
+                self.environment.move(ant.display, coord[0], coord[1])
+
+                if collide(self.environment, ant) == 2:
+                    # if there is a collision between a food source and an ant, the scout mode is removed
+                    # with each collision between an ant and a food source, its life expectancy decreases by 1
+                    self.food.life -= 1
+                    self.environment.itemconfig(self.food.display, fill=get_food_colour(self.food.life))
+                    ant.energy = 100
+
+                    # If the food source has been consumed, a new food source is replaced
+                    if self.food.life < 1:
+                        self.food.replace(self.environment)
+                        self.environment.itemconfig(self.food.display, fill=get_food_colour(self.food.life))
+                    ant.scout_mode = False
+                    self.environment.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['notscouting_colour'])
+
+                    # the ant puts down its first pheromones when it touches food
+                    _ = [pheromones.append(Pheromone(ant, self.environment))
+                        for i in range(_CONFIG_['pheromone']['qty_ph_upon_foodfind'])]
+                        
+
+            else:  # If the ant found the food source
+                # The position of the nest will influence the movements of the ant
+                coord = choice(find_nest(ant, self.environment))
+                proba = choice([0]*23+[1])
+                if proba:
+                    pheromones.append(Pheromone(ant, self.environment))
+                ant.posx += coord[0]
+                ant.posy += coord[1]
+                self.environment.move(ant.display, coord[0], coord[1])
+                # Ant at nest: if there is a collision between a nest and an ant, the ant switches to scout mode
+                if collide(self.environment, ant) == 1:
+                    ant.scout_mode = True
+                    self.environment.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['scouting_colour'])
+
+            if sim_args.n_ants<= 100:
+                self.environment.update()
+        if sim_args.n_ants > 100:
+            self.environment.update()
+        
+        # Refresh status bar
+        self.status_vars[0].set(f'Ants: {len(self.ant_data)}')
+        self.status_vars[1].set(f'Food left: {self.food.life}')
+        self.status_vars[2].set(f'Pheromones: {len(pheromones)}')
+        self.status_vars[3].set('')
 
 
 
@@ -269,90 +355,19 @@ def pheromones_affinity(ant, canvas):
     return new_move_tab
 
 
-def f_move(canvas, ant_data, food, status_vars):
-    """simulates the movement of an ant
-
-    """
-    
-    for pheromone in pheromones:
-        # At each loop the life expectancy of pheromones decreases by 1
-        pheromone.life -= 1
-        if pheromone.life <= 0:  # If the life expectancy of a pheromone reaches 0 it is removed
-            canvas.delete(pheromone.display)
-            pheromones.remove(pheromone)
-
-    for ant in ant_data:
-        # Movement of ants
-        if ant.scout_mode:  # if the ant is looking for a food source
-
-            # if the ant leaves the environment, we adapt its movements for which it stays there
-            if ant.posx <= 0 or ant.posy <= 0 or ant.posx >= e_w - 1 or ant.posy >= e_h - 1:
-                #FIXME can't choose from an empty index
-                coord = choice(dont_out(ant))
-            else:
-                # Movement of an ant is adjusted according to the pheromones present. If there is no pheromone,
-                # there will be no modification on its movement.
-                coord = pheromones_affinity(ant, canvas)
-                if not coord:
-                    coord = move_tab
-                coord = choice(coord)
-
-            ant.posx += coord[0]
-            ant.posy += coord[1]
-            canvas.move(ant.display, coord[0], coord[1])
-
-            if collide(canvas, ant) == 2:
-                # if there is a collision between a food source and an ant, the scout mode is removed
-                # with each collision between an ant and a food source, its life expectancy decreases by 1
-                food.life -= 1
-                canvas.itemconfig(food.display, fill=get_food_colour(food.life))
-
-                # If the food source has been consumed, a new food source is replaced
-                if food.life < 1:
-                    food.replace(canvas)
-                    canvas.itemconfig(food.display, fill=get_food_colour(food.life))
-                ant.scout_mode = False
-                canvas.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['notscouting_colour'])
-
-                # the ant puts down its first pheromones when it touches food
-                _ = [pheromones.append(Pheromone(ant, canvas))
-                     for i in range(_CONFIG_['pheromone']['qty_ph_upon_foodfind'])]
-                    
-
-        else:  # If the ant found the food source
-            # The position of the nest will influence the movements of the ant
-            coord = choice(find_nest(ant, canvas))
-            proba = choice([0]*23+[1])
-            if proba:
-                pheromones.append(Pheromone(ant, canvas))
-            ant.posx += coord[0]
-            ant.posy += coord[1]
-            canvas.move(ant.display, coord[0], coord[1])
-            # Ant at nest: if there is a collision between a nest and an ant, the ant switches to scout mode
-            if collide(canvas, ant) == 1:
-                ant.scout_mode = True
-                canvas.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['scouting_colour'])
-
-        if sim_args.n_ants<= 100:
-            canvas.update()
-    if sim_args.n_ants > 100:
-        canvas.update()
-    
-    # Refresh status bar
-    status_vars[0].set(f'Ants: {len(ant_data)}')
-    status_vars[1].set(f'Food left: {food.life}')
-    status_vars[2].set(f'Pheromones: {len(pheromones)}')
-    status_vars[3].set('')
-
-
 if __name__ == "__main__":
     try:
-        parser = argparse.ArgumentParser(description='Simulation of ants colony in python.')
+        parser = argparse.ArgumentParser(
+            prog = 'Colony ant simulator',
+            description='Simulation of ants colony in python.'
+        )
         parser.add_argument('n_ants', type=int, nargs='?', default=randint(10, 100), 
-                            help='Number of ants (recommended: 10-100)')
+                            help='Number of ants (recommended: 10-100; default: random number between 10 and 100)')
+        parser.add_argument('-m', dest='mode', nargs='?', default='basic', choices=['basic', 'reality'],
+                            help='Simulation mode (default: "basic")')
         sim_args = parser.parse_args()
 
-        Environment(sim_args.n_ants)
+        Environment(sim_args.n_ants, sim_args.mode)
     except KeyboardInterrupt:
         print("Exiting...")
         exit(0)

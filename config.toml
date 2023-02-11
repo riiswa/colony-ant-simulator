@@ -1,9 +1,12 @@
+[ant]
+stepsize = 7
+
 [environment]
 width = 500
 height = 500
 
-[ant]
-stepsize = 7
+[nest]
+ini_foodqty = 100
 
 [pheromone]
 persistence = 30
