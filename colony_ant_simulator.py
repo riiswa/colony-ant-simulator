@@ -42,6 +42,12 @@ class Nest:
         self.posy = randrange(50, 450)
         self.display = circle(self.posx, self.posy, _CONFIG_['graphics']['nest']['radius'], canvas, _CONFIG_['graphics']['nest']['colour'])
         self.food_storage = _CONFIG_['nest']['ini_foodqty']
+    
+    def feed_ant(self, ant):
+        desired_energy_topup = _CONFIG_['ant']['ini_energy'] - ant.energy
+        actual_energy_topup = min(desired_energy_topup, self.food_storage)
+        self.food_storage -= actual_energy_topup
+        return actual_energy_topup
 
 
 class Food:
@@ -206,7 +212,8 @@ class Environment:
                 ant.posy += coord[1]
                 self.environment.move(ant.display, coord[0], coord[1])
 
-                if collide(self.environment, ant) == 2:
+                collision = collide(self.environment, ant)
+                if collision == 2:
                     # if there is a collision between a food source and an ant, the scout mode is removed
                     # with each collision between an ant and a food source, its life expectancy decreases by 1
                     self.food.life -= 1
@@ -223,6 +230,9 @@ class Environment:
                     # the ant puts down its first pheromones when it touches food
                     _ = [pheromones.append(Pheromone(ant, self.environment))
                         for i in range(_CONFIG_['pheromone']['qty_ph_upon_foodfind'])]
+                
+                elif collision == 1: # Collision with nest => Maybe the ant is hungry
+                    ant.energy += self.nest.feed_ant(ant)
                         
 
             else:  # If the ant found the food source
@@ -239,11 +249,11 @@ class Environment:
                     ant.scout_mode = True
                     self.environment.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['scouting_colour'])
                     
+                    # Ants delivers food to the nest
+                    self.nest.food_storage += 1
+
                     # Ant eats energy from the nest
-                    desired_energy_topup = _CONFIG_['ant']['ini_energy'] - ant.energy
-                    actual_energy_topup = min(desired_energy_topup, self.nest.food_storage)
-                    ant.energy += actual_energy_topup # Ant restore their enrgy thanks to the nest
-                    self.nest.food_storage -= actual_energy_topup
+                    ant.energy += self.nest.feed_ant(ant)
 
             if len(self.ant_data)<= 100:
                 self.environment.update()
