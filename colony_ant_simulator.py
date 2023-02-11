@@ -4,6 +4,7 @@ import ut
 
 from copy import copy
 from random import choice, randrange, randint
+from coloraide import Color
 from tkinter import *
 import tomllib
 
@@ -54,7 +55,7 @@ class Food:
 
         self.posx = randrange(50, 450)
         self.posy = randrange(50, 450)
-        self.display = circle(self.posx, self.posy, randint(10, 25), canvas, from_rgb(self.life))
+        self.display = circle(self.posx, self.posy, randint(10, 25), canvas, get_food_colour(self.life))
 
     def replace(self, canvas):
         """Relocates the food source to another location when its lifespan reaches 0
@@ -156,14 +157,13 @@ def circle(x, y, radius, canvas, color):
     """
     return canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill=color, outline='')
 
-def from_rgb(food_life):
-    """translates an rgb tuple of int to a tkinter friendly color code
+def get_food_colour(food_life):
+    """translates an food life (100...0) int to a tkinter-friendly color code
     """
-    r = 0
-    g = 2 * food_life
-    b = 2 * food_life
-
-    return f'#{r:02x}{g:02x}{b:02x}'
+    return Color.interpolate([
+        _CONFIG_['graphics']['food']['ini_colour'],
+        _CONFIG_['graphics']['environment']['backgroundcolour']
+    ])((100-food_life)/100).to_string(hex=True)
 
 def dont_out(ant):
     """prevents ants from leaving the environment
@@ -303,12 +303,12 @@ def f_move(canvas, ant_data, food, status_vars):
                 # if there is a collision between a food source and an ant, the scout mode is removed
                 # with each collision between an ant and a food source, its life expectancy decreases by 1
                 food.life -= 1
-                canvas.itemconfig(food.display, fill=from_rgb(food.life))
+                canvas.itemconfig(food.display, fill=get_food_colour(food.life))
 
                 # If the food source has been consumed, a new food source is replaced
                 if food.life < 1:
                     food.replace(canvas)
-                    canvas.itemconfig(food.display, fill=from_rgb(food.life))
+                    canvas.itemconfig(food.display, fill=get_food_colour(food.life))
                 ant.scout_mode = False
                 canvas.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['notscouting_colour'])
 
