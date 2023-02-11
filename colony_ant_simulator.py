@@ -2,6 +2,8 @@
 
 import ut
 
+import argparse
+
 from copy import copy
 from random import choice, randrange, randint
 from coloraide import Color
@@ -203,10 +205,10 @@ def find_nest(ant, canvas):
     BGn = BG_o[0]
     BDn = BD_o[0]
 
-    HG = len(HG_o) - 2 - nb_ant
-    HD = len(HD_o) - 2 - nb_ant
-    BG = len(BG_o) - 2 - nb_ant
-    BD = len(BD_o) - 2 - nb_ant
+    HG = len(HG_o) - 2 - sim_args.n_ants
+    HD = len(HD_o) - 2 - sim_args.n_ants
+    BG = len(BG_o) - 2 - sim_args.n_ants
+    BD = len(BD_o) - 2 - sim_args.n_ants
 
     new_move_tab = []
     if HGn == 1:
@@ -246,10 +248,10 @@ def pheromones_affinity(ant, canvas):
     HD_o = canvas.find_overlapping(e_w, 0, ant_coords[0], ant_coords[1])
     BG_o = canvas.find_overlapping(0, e_h, ant_coords[0], ant_coords[1])
     BD_o = canvas.find_overlapping(e_w, e_h, ant_coords[0], ant_coords[1])
-    HG = len(HG_o) - (2 + nb_ant)
-    HD = len(HD_o) - (2 + nb_ant)
-    BG = len(BG_o) - (2 + nb_ant)
-    BD = len(BD_o) - (2 + nb_ant)
+    HG = len(HG_o) - (2 + sim_args.n_ants)
+    HD = len(HD_o) - (2 + sim_args.n_ants)
+    BG = len(BG_o) - (2 + sim_args.n_ants)
+    BD = len(BD_o) - (2 + sim_args.n_ants)
     new_move_tab = []
 
     if HG > 1:
@@ -330,9 +332,9 @@ def f_move(canvas, ant_data, food, status_vars):
                 ant.scout_mode = True
                 canvas.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['scouting_colour'])
 
-        if nb_ant <= 100:
+        if sim_args.n_ants<= 100:
             canvas.update()
-    if nb_ant > 100:
+    if sim_args.n_ants > 100:
         canvas.update()
     
     # Refresh status bar
@@ -344,11 +346,12 @@ def f_move(canvas, ant_data, food, status_vars):
 
 if __name__ == "__main__":
     try:
-        nb_ant = int(input(
-            "Enter the number of ants you want for the simulation (recommended: 10-100) \n "
-            "or leave the field blank for a random choice: ") or randint(10, 100)
-                     )
-        Environment(nb_ant)
+        parser = argparse.ArgumentParser(description='Simulation of ants colony in python.')
+        parser.add_argument('n_ants', type=int, nargs='?', default=randint(10, 100), 
+                            help='Number of ants (recommended: 10-100)')
+        sim_args = parser.parse_args()
+
+        Environment(sim_args.n_ants)
     except KeyboardInterrupt:
         print("Exiting...")
         exit(0)
