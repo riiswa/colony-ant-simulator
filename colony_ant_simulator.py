@@ -130,7 +130,8 @@ class Environment:
         # Setup status bar
         self.status_vars = [StringVar() for i in range (6)]
         _ = [var.set(f'Ini ({i}) ...') for i, var in enumerate(self.status_vars)]
-        _ = [Label(self.root, textvariable=var).grid(column=i, row=1, sticky='nw') for i, var in enumerate(self.status_vars)]
+        _ = [Label(self.root, textvariable=var).grid(column=i, row=1, sticky='nw') for i, var in enumerate(self.status_vars[:3])]
+        _ = [Label(self.root, textvariable=var).grid(column=i, row=2, sticky='nw') for i, var in enumerate(self.status_vars[3:])]
 
         # Initialization of the nest
         self.nest = Nest(self.environment)
@@ -167,11 +168,11 @@ class Environment:
             number_new_ants = int(self.nest.food_storage // _CONFIG_['ant']['energy_to_create_new_ant'])
             self.ant_data = self.ant_data + [Ant(self.nest, self.environment) for i in range(number_new_ants)]
             self.nest.food_storage -= number_new_ants * _CONFIG_['ant']['energy_to_create_new_ant']
-            print(f'Welcoming {number_new_ants} new ants to the colony.')
+            print(f'[{self.sim_loop}] Welcoming {number_new_ants} new ants to the colony.')
 
         # Check if we have any ant still alive...
         if len(self.ant_data) == 0:
-            print("All ants have died and the colony didn't survive a tragical famine.\nExiting...")
+            print(f"[{self.sim_loop}] All ants have died and the colony didn't survive a tragical famine.\nExiting...")
             exit(0)
         nb_ants_before_famine = len(self.ant_data)
 
@@ -210,7 +211,7 @@ class Environment:
                     # with each collision between an ant and a food source, its life expectancy decreases by 1
                     self.food.life -= 1
                     self.environment.itemconfig(self.food.display, fill=get_food_colour(self.food.life))
-                    ant.energy = 100
+                    ant.energy = _CONFIG_['ant']['ini_energy']
 
                     # If the food source has been consumed, a new food source is replaced
                     if self.food.life < 1:
@@ -249,7 +250,7 @@ class Environment:
         
         nb_ants_died = nb_ants_before_famine - len(self.ant_data)
         if nb_ants_died > 0:
-            print(f'{nb_ants_died} have died of starvation')
+            print(f'[{self.sim_loop}] {nb_ants_died} ants have died of starvation.')
                 
         if len(self.ant_data) > 100:
             self.environment.update()
@@ -259,7 +260,7 @@ class Environment:
             avg_energy = sum([an_ant.energy for an_ant in self.ant_data])/len(self.ant_data)
         else:
             avg_energy = 0
-        self.status_vars[0].set(f'Loop {self.sim_loop}')
+        self.status_vars[0].set(f'Sim loop {self.sim_loop}')
         self.status_vars[1].set(f'Ants: {len(self.ant_data)}')
         self.status_vars[2].set(f'Energy/ant: {avg_energy:.2f}')
         self.status_vars[3].set(f'Food reserve: {self.nest.food_storage:.2f}')
