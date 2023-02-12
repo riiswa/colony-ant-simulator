@@ -1,20 +1,28 @@
+[ant]
+stepsize = 7
+ini_energy = 10
+energy_to_create_new_ant = 50
+
 [environment]
 width = 500
 height = 500
 
-[ant]
-stepsize = 7
+[nest]
+
+ini_foodqty = 49
 
 [pheromone]
-lifeexpectancy = 30
+persistence = 30
+qty_ph_upon_foodfind = 30
 
 [graphics]
-environment.backgroundcolour = "#000028"
-nest.radius = 20
-nest.colour = "#F27E1D"
 ant.radius = 2
 ant.scouting_colour = "#AF0220"
 ant.notscouting_colour = "#3BC302"
+environment.backgroundcolour = "#F4F2F0" # Dark mode: "#000028"
+food.ini_colour = "#00C8C8"
+nest.radius = 20
+nest.colour = "#F27E1D"
 pheromone.radius = 0.1
 pheromone.colour = "#050994"
 
