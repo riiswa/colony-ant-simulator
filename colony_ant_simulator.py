@@ -205,7 +205,7 @@ class Environment:
         for ant in self.ant_data:
 
             # Ant energy depletes if simulation mode = reality
-            if sim_args.mode == 'reality':
+            if self.sim_mode == 'reality':
                 ant.set_energy(minus=0.01)
                 if ant.energy <= 0:
                     ant.remove_from_display()
@@ -429,8 +429,8 @@ if __name__ == "__main__":
         )
         parser.add_argument('n_ants', type=int, nargs='?', default=randint(10, 100), 
                             help='Number of ants (recommended: 10-100; default: random number between 10 and 100)')
-        parser.add_argument('-m', dest='mode', nargs='?', default='basic', choices=['basic', 'reality'],
-                            help='Simulation mode (default: "basic")')
+        parser.add_argument('-m', dest='mode', nargs='?', default='theory', choices=['theory', 'reality'],
+                            help='Simulation mode (default: "theory")')
         sim_args = parser.parse_args()
 
         Environment(sim_args.n_ants, sim_args.mode)
