@@ -190,7 +190,8 @@ class Environment:
                 pheromones.remove(pheromone)
 
         # New ants generated if enough food reserves
-        if self.nest.food_storage > _CONFIG_['ant']['energy_to_create_new_ant']:
+        if (self.nest.food_storage > _CONFIG_['ant']['energy_to_create_new_ant']) \
+            & (self.sim_mode == 'reality'):
             number_new_ants = int(self.nest.food_storage // _CONFIG_['ant']['energy_to_create_new_ant'])
             self.ant_data = self.ant_data + [Ant(self.nest, self.environment) for i in range(number_new_ants)]
             self.nest.food_storage -= number_new_ants * _CONFIG_['ant']['energy_to_create_new_ant']
@@ -238,7 +239,8 @@ class Environment:
                     # with each collision between an ant and a food source, its life expectancy decreases by 1
                     self.food.life -= 1
                     self.environment.itemconfig(self.food.display, fill=get_food_colour(self.food.life))
-                    ant.set_energy(_CONFIG_['ant']['ini_energy'])
+                    if self.sim_mode == 'reality':
+                        ant.set_energy(_CONFIG_['ant']['ini_energy'])
 
                     # If the food source has been consumed, a new food source is replaced
                     if self.food.life < 1:
@@ -252,7 +254,8 @@ class Environment:
                         for i in range(_CONFIG_['pheromone']['qty_ph_upon_foodfind'])]
                 
                 elif collision == 1: # Collision with nest => Maybe the ant is hungry
-                    ant.set_energy(plus=self.nest.feed_ant(ant))
+                    if self.sim_mode == 'reality':
+                        ant.set_energy(plus=self.nest.feed_ant(ant))
                         
 
             else:  # If the ant found the food source
@@ -273,7 +276,8 @@ class Environment:
                     self.nest.food_storage += 1
 
                     # Ant eats energy from the nest
-                    ant.set_energy(plus=self.nest.feed_ant(ant))
+                    if self.sim_mode == 'reality':
+                        ant.set_energy(plus=self.nest.feed_ant(ant))
 
             if len(self.ant_data)<= 100:
                 self.environment.update()
