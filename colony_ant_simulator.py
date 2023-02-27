@@ -127,32 +127,50 @@ class Pheromone:
 
     """
 
-    def __init__(self, ant, canvas):
+    def __init__(self, posx, posy, canvas):
         """The pheromones are placed in the current position of the ant
 
         """
-        self.posx = ant.posx
-        self.posy = ant.posy
-        self.life = _CONFIG_['pheromone']['persistence'] # Life expectancy of the pheromone which expires after a certain time
+        self.posx = posx
+        self.posy = posy
         self.display = circle(self.posx, self.posy, _CONFIG_['graphics']['pheromone']['radius'], canvas, _CONFIG_['graphics']['pheromone']['colour'])
 
 
 class PheromoneMap:
     """A map of pheromones. Avoids drawing each pheromone on the canvas.
+
+    The dataframe PheromoneMap.map contains the most up to date information about pheromones.
+    The list PheromoneMap.pheromones_on_canvas is a list of pheromones displayed on canvas.
     """
 
-    def __init__(self):
-        self.map = pd.DataFrame(dtype=int,
-                                data={
-            'x': list(range(e_w)),
-            'y': list(range(e_h)),
-            'qty': 0
-            })
+    def __init__(self, canvas):
+        self.canvas = canvas
+        self.map = pd.DataFrame(
+            dtype=int,
+            columns=['x', 'y', 'qty', 'life']
+        )
+        self.pheromones_on_canvas = []
+
+    def num_pheromones(self):
+        return len(self.map)
     
-    def add(self, posx, posy, qty):
-        self.map.loc[(self.map.x == posx) & (self.map.y == posy), 'qty'] += qty
+    def add(self, posx, posy, qty, ini_life):
+        self.map = pd.concat([self.map, [posx, posy, qty, ini_life]])
     
+    def life_decay(self, minus=1):
+        self.map.life = self.map.life - minus
+        self.map.drop((self.map.life<0).index, inplace=True)
+
+    def refresh_canvas(self):
+        _ = [self.canvas.delete(ph.display) for ph in self.pheromones_on_canvas]
+        ph_to_draw = list(pd.unique(self.map.apply(lambda r: (r.x, r.y))))
+        self.pheromones_on_canvas = [Pheromone(ph[0], ph[1], self.canvas) for ph in ph_to_draw]
     
+    def area_count(self, x1, y1, x2, y2):
+        
+        return 3
+    
+
 
 
 class Environment:
@@ -168,9 +186,9 @@ class Environment:
         self.root.title(f'Ant Colony Simulator (mode: {sim_mode})')
         self.root.bind("<Escape>", lambda quit: self.root.destroy())
 
-        self.environment = Canvas(
+        self.canvas = Canvas(
             self.root, width=e_w, height=e_h, background=_CONFIG_['graphics']['environment']['backgroundcolour'])
-        self.environment.grid(column=0, row=0, columnspan=4)
+        self.canvas.grid(column=0, row=0, columnspan=4)
         
         # Setup status bar
         self.status_vars = [StringVar() for i in range (6)]
@@ -179,19 +197,19 @@ class Environment:
         _ = [Label(self.root, textvariable=var).grid(column=i, row=2, sticky='nw') for i, var in enumerate(self.status_vars[3:])]
 
         # Initialization of the nest
-        self.nest = Nest(self.environment)
+        self.nest = Nest(self.canvas)
 
         # Initialization of the food
-        self.food = Food(self.environment)
+        self.food = Food(self.canvas)
 
         # Birth of ants - List contains all ants object
-        self.ant_data = [Ant(self.nest, self.environment) for i in range(self.ant_number)]
+        self.ant_data = [Ant(self.nest, self.canvas) for i in range(self.ant_number)]
 
         # Creation of pheromone map
-        self.food_pher_map = PheromoneMap()
+        self.food_phero_map = PheromoneMap()
 
         # Initiates the movement of ants in the environment after the creation of the environment
-        self.environment.after(
+        self.canvas.after(
             1, self.move_forever())
         self.root.mainloop()
 
@@ -204,18 +222,13 @@ class Environment:
         """
         self.sim_loop += 1
 
-        for pheromone in pheromones:
-            # At each loop the life expectancy of pheromones decreases by 1
-            pheromone.life -= 1
-            if pheromone.life <= 0:  # If the life expectancy of a pheromone reaches 0 it is removed
-                self.environment.delete(pheromone.display)
-                pheromones.remove(pheromone)
+        self.food_phero_map.life_decay()  # At each loop the life expectancy of pheromones decreases by 1
 
         # New ants generated if enough food reserves
         if (self.nest.food_storage > _CONFIG_['ant']['energy_to_create_new_ant']) \
             & (self.sim_mode == 'reality'):
             number_new_ants = int(self.nest.food_storage // _CONFIG_['ant']['energy_to_create_new_ant'])
-            self.ant_data = self.ant_data + [Ant(self.nest, self.environment) for i in range(number_new_ants)]
+            self.ant_data = self.ant_data + [Ant(self.nest, self.canvas) for i in range(number_new_ants)]
             self.nest.food_storage -= number_new_ants * _CONFIG_['ant']['energy_to_create_new_ant']
             print(f'[{self.sim_loop}] Welcoming {number_new_ants} new ants to the colony.')
 
@@ -246,34 +259,38 @@ class Environment:
                 else:
                     # Movement of an ant is adjusted according to the pheromones present. If there is no pheromone,
                     # there will be no modification on its movement.
-                    coord = pheromones_affinity(ant, self.environment)
+                    coord = pheromones_affinity(ant, self.canvas, self.food_phero_map)
                     if not coord:
                         coord = move_tab
                     coord = choice(coord)
 
                 ant.posx += coord[0]
                 ant.posy += coord[1]
-                self.environment.move(ant.display, coord[0], coord[1])
+                self.canvas.move(ant.display, coord[0], coord[1])
 
-                collision = collide(self.environment, ant)
+                collision = collide(self.canvas, ant)
                 if collision == 2:
                     # if there is a collision between a food source and an ant, the scout mode is removed
                     # with each collision between an ant and a food source, its life expectancy decreases by 1
                     self.food.life -= 1
-                    self.environment.itemconfig(self.food.display, fill=get_food_colour(self.food.life))
+                    self.canvas.itemconfig(self.food.display, fill=get_food_colour(self.food.life))
                     if self.sim_mode == 'reality':
                         ant.set_energy(_CONFIG_['ant']['ini_energy'])
 
                     # If the food source has been consumed, a new food source is replaced
                     if self.food.life < 1:
-                        self.food.replace(self.environment)
-                        self.environment.itemconfig(self.food.display, fill=get_food_colour(self.food.life))
+                        self.food.replace(self.canvas)
+                        self.canvas.itemconfig(self.food.display, fill=get_food_colour(self.food.life))
                     ant.scout_mode = False
-                    self.environment.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['notscouting_colour'])
+                    self.canvas.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['notscouting_colour'])
 
                     # the ant puts down its first pheromones when it touches food
-                    _ = [pheromones.append(Pheromone(ant, self.environment))
-                        for i in range(_CONFIG_['pheromone']['qty_ph_upon_foodfind'])]
+                    self.food_phero_map.add(
+                        ant.posx, 
+                        ant.posy, 
+                        _CONFIG_['pheromone']['qty_ph_upon_foodfind'], 
+                        _CONFIG_['pheromone']['persistence']
+                    )
                 
                 elif collision == 1: # Collision with nest => Maybe the ant is hungry
                     if self.sim_mode == 'reality':
@@ -282,17 +299,17 @@ class Environment:
 
             else:  # If the ant found the food source
                 # The position of the nest will influence the movements of the ant
-                coord = choice(find_nest(ant, self.environment))
+                coord = choice(find_nest(ant, self.canvas))
                 proba = choice([0]*23+[1])
                 if proba:
-                    pheromones.append(Pheromone(ant, self.environment))
+                    pheromones.append(Pheromone(ant, self.canvas))
                 ant.posx += coord[0]
                 ant.posy += coord[1]
-                self.environment.move(ant.display, coord[0], coord[1])
+                self.canvas.move(ant.display, coord[0], coord[1])
                 # Ant at nest: if there is a collision between a nest and an ant, the ant switches to scout mode
-                if collide(self.environment, ant) == 1:
+                if collide(self.canvas, ant) == 1:
                     ant.scout_mode = True
-                    self.environment.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['scouting_colour'])
+                    self.canvas.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['scouting_colour'])
                     
                     # Ants delivers food to the nest
                     self.nest.food_storage += 1
@@ -302,14 +319,16 @@ class Environment:
                         ant.set_energy(plus=self.nest.feed_ant(ant))
 
             if len(self.ant_data)<= 100:
-                self.environment.update()
+                self.canvas.update()
         
         nb_ants_died = nb_ants_before_famine - len(self.ant_data)
         if nb_ants_died > 0:
             print(f'[{self.sim_loop}] {nb_ants_died} ants have died of starvation.')
-                
+
+        self.food_phero_map.refresh_canvas()  # Refresh pheromones displayed
+
         if len(self.ant_data) > 100:
-            self.environment.update()
+            self.canvas.update()
         
         # Refresh status bar
         if len(self.ant_data)>0:
@@ -414,11 +433,11 @@ def find_nest(ant, canvas):
     return move_tab
 
 
-def pheromones_affinity(ant, canvas):
+def pheromones_affinity(ant, canvas, pheromone_map):
     """Returns a new movement table for which there will be a high probability of approaching pheromones
 
     """
-    if pheromones == []:
+    if pheromone_map.num_pheromones() == 0:
         return []
     ant_coords = (ant.posx, ant.posy)
 
@@ -426,10 +445,19 @@ def pheromones_affinity(ant, canvas):
     HD_o = canvas.find_overlapping(e_w, 0, ant_coords[0], ant_coords[1])
     BG_o = canvas.find_overlapping(0, e_h, ant_coords[0], ant_coords[1])
     BD_o = canvas.find_overlapping(e_w, e_h, ant_coords[0], ant_coords[1])
+
+    HG_o = pheromone_map.area_count(0, 0, ant_coords[0], ant_coords[1])
+    HD_o = pheromone_map.area_count(e_w, 0, ant_coords[0], ant_coords[1])
+    BG_o = pheromone_map.area_count(0, e_h, ant_coords[0], ant_coords[1])
+    BD_o = pheromone_map.area_count(e_w, e_h, ant_coords[0], ant_coords[1])
+
     HG = len(HG_o) - (2 + sim_args.n_ants)
     HD = len(HD_o) - (2 + sim_args.n_ants)
     BG = len(BG_o) - (2 + sim_args.n_ants)
     BD = len(BD_o) - (2 + sim_args.n_ants)
+
+
+
     new_move_tab = []
 
     if HG > 1:
