@@ -9,6 +9,7 @@ from random import choice, randrange, randint
 from coloraide import Color
 from tkinter import *
 import tomllib
+import pandas as pd
 
 # Load configuration
 with open("config.toml", mode="rb") as fp:
@@ -136,6 +137,24 @@ class Pheromone:
         self.display = circle(self.posx, self.posy, _CONFIG_['graphics']['pheromone']['radius'], canvas, _CONFIG_['graphics']['pheromone']['colour'])
 
 
+class PheromoneMap:
+    """A map of pheromones. Avoids drawing each pheromone on the canvas.
+    """
+
+    def __init__(self):
+        self.map = pd.DataFrame(dtype=int,
+                                data={
+            'x': list(range(e_w)),
+            'y': list(range(e_h)),
+            'qty': 0
+            })
+    
+    def add(self, posx, posy, qty):
+        self.map.loc[(self.map.x == posx) & (self.map.y == posy), 'qty'] += qty
+    
+    
+
+
 class Environment:
     """Create the entire environment or a number x of ants will move
     """
@@ -166,7 +185,10 @@ class Environment:
         self.food = Food(self.environment)
 
         # Birth of ants - List contains all ants object
-        self.ant_data = [Ant(self.nest, self.environment) for i in range(self.ant_number)] 
+        self.ant_data = [Ant(self.nest, self.environment) for i in range(self.ant_number)]
+
+        # Creation of pheromone map
+        self.food_pher_map = PheromoneMap()
 
         # Initiates the movement of ants in the environment after the creation of the environment
         self.environment.after(
@@ -316,7 +338,7 @@ def circle(x, y, radius, canvas, color):
     return canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill=color, outline='')
 
 def get_food_colour(food_life):
-    """translates an food life (100...0) int to a tkinter-friendly color code
+    """translates food life (100...0) int to a tkinter-friendly color code
     """
     return Color.interpolate([
         _CONFIG_['graphics']['food']['ini_colour'],
