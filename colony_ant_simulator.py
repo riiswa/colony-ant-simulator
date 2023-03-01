@@ -151,24 +151,41 @@ class PheromoneMap:
         )
         self.pheromones_on_canvas = []
 
-    def num_pheromones(self):
-        return len(self.map)
+    def any_pheromone(self):
+        return len(self.map) > 0
+    
+    def count_pheromones(self):
+        return self.map.qty.sum()
     
     def add(self, posx, posy, qty, ini_life):
-        self.map = pd.concat([self.map, [posx, posy, qty, ini_life]])
+        self.map = pd.concat([
+            self.map,
+            pd.DataFrame({
+                'x': [posx],
+                'y': [posy],
+                'qty': [qty],
+                'life': [ini_life]
+            })
+        ])
+        return True
     
     def life_decay(self, minus=1):
         self.map.life = self.map.life - minus
-        self.map.drop((self.map.life<0).index, inplace=True)
+        self.map.drop(self.map.loc[self.map.life<0].index, inplace=True)  # FIXME: All pheromones are removed at the same time!
+        return True
 
     def refresh_canvas(self):
         _ = [self.canvas.delete(ph.display) for ph in self.pheromones_on_canvas]
-        ph_to_draw = list(pd.unique(self.map.apply(lambda r: (r.x, r.y))))
-        self.pheromones_on_canvas = [Pheromone(ph[0], ph[1], self.canvas) for ph in ph_to_draw]
+        self.pheromones_on_canvas = []
+        if len(self.map) > 0:
+            ph_to_draw = list(pd.unique(self.map.apply(lambda r: (r.x, r.y), axis=1)))
+            self.pheromones_on_canvas = [Pheromone(ph[0], ph[1], self.canvas) for ph in ph_to_draw]
     
     def area_count(self, x1, y1, x2, y2):
-        
-        return 3
+        cond_x = ((x1 <= self.map.x) & (self.map.x <= x2)) if x1 < x2 else ((x2 <= self.map.x) & (self.map.x <= x1))
+        cond_y = ((y1 <= self.map.y) & (self.map.y <= y2)) if y1 < y2 else ((y2 <= self.map.y) & (self.map.y <= y1))
+
+        return self.map.loc[cond_x & cond_y, 'qty'].sum()
     
 
 
@@ -184,7 +201,7 @@ class Environment:
 
         self.root = Tk()
         self.root.title(f'Ant Colony Simulator (mode: {sim_mode})')
-        self.root.bind("<Escape>", lambda quit: self.root.destroy())
+        self.root.bind("<Escape>", lambda quit: self.stop_simulation())
 
         self.canvas = Canvas(
             self.root, width=e_w, height=e_h, background=_CONFIG_['graphics']['environment']['backgroundcolour'])
@@ -206,7 +223,7 @@ class Environment:
         self.ant_data = [Ant(self.nest, self.canvas) for i in range(self.ant_number)]
 
         # Creation of pheromone map
-        self.food_phero_map = PheromoneMap()
+        self.food_phero_map = PheromoneMap(self.canvas)
 
         # Initiates the movement of ants in the environment after the creation of the environment
         self.canvas.after(
@@ -214,9 +231,15 @@ class Environment:
         self.root.mainloop()
 
     def move_forever(self):
-        while 1:
+        self.keep_sim_running = True
+        while self.keep_sim_running:
             self.f_move()
+        print('Application closed.')
+        self.root.destroy()
     
+    def stop_simulation(self):
+        self.keep_sim_running = False
+
     def f_move(self):
         """Simulates the movements ants
         """
@@ -235,7 +258,8 @@ class Environment:
         # Check if we have any ant still alive...
         if len(self.ant_data) == 0:
             print(f"[{self.sim_loop}] All ants have died and the colony didn't survive a tragical famine.\nExiting...")
-            exit(0)
+            self.stop_simulation()
+            return None
         nb_ants_before_famine = len(self.ant_data)
 
         for ant in self.ant_data:
@@ -302,7 +326,12 @@ class Environment:
                 coord = choice(find_nest(ant, self.canvas))
                 proba = choice([0]*23+[1])
                 if proba:
-                    pheromones.append(Pheromone(ant, self.canvas))
+                    self.food_phero_map.add(
+                        ant.posx, 
+                        ant.posy, 
+                        1, 
+                        _CONFIG_['pheromone']['persistence']
+                    )
                 ant.posx += coord[0]
                 ant.posy += coord[1]
                 self.canvas.move(ant.display, coord[0], coord[1])
@@ -335,12 +364,13 @@ class Environment:
             avg_energy = sum([an_ant.energy for an_ant in self.ant_data])/len(self.ant_data)
         else:
             avg_energy = 0
+        
         self.status_vars[0].set(f'Sim loop {self.sim_loop}')
         self.status_vars[1].set(f'Ants: {len(self.ant_data)}')
         self.status_vars[2].set(f'Energy/ant: {avg_energy:.2f}')
         self.status_vars[3].set(f'Food reserve: {self.nest.food_storage:.2f}')
         self.status_vars[4].set(f'Unpicked food: {self.food.life}')
-        self.status_vars[5].set(f'Pheromones: {len(pheromones)}')
+        self.status_vars[5].set(f'Pheromones: {self.food_phero_map.count_pheromones()}')
 
 
 
@@ -437,26 +467,19 @@ def pheromones_affinity(ant, canvas, pheromone_map):
     """Returns a new movement table for which there will be a high probability of approaching pheromones
 
     """
-    if pheromone_map.num_pheromones() == 0:
+    if not pheromone_map.any_pheromone():
         return []
     ant_coords = (ant.posx, ant.posy)
-
-    HG_o = canvas.find_overlapping(0, 0, ant_coords[0], ant_coords[1])
-    HD_o = canvas.find_overlapping(e_w, 0, ant_coords[0], ant_coords[1])
-    BG_o = canvas.find_overlapping(0, e_h, ant_coords[0], ant_coords[1])
-    BD_o = canvas.find_overlapping(e_w, e_h, ant_coords[0], ant_coords[1])
 
     HG_o = pheromone_map.area_count(0, 0, ant_coords[0], ant_coords[1])
     HD_o = pheromone_map.area_count(e_w, 0, ant_coords[0], ant_coords[1])
     BG_o = pheromone_map.area_count(0, e_h, ant_coords[0], ant_coords[1])
     BD_o = pheromone_map.area_count(e_w, e_h, ant_coords[0], ant_coords[1])
 
-    HG = len(HG_o) - (2 + sim_args.n_ants)
-    HD = len(HD_o) - (2 + sim_args.n_ants)
-    BG = len(BG_o) - (2 + sim_args.n_ants)
-    BD = len(BD_o) - (2 + sim_args.n_ants)
-
-
+    HG = HG_o - (2 + sim_args.n_ants)
+    HD = HD_o - (2 + sim_args.n_ants)
+    BG = BG_o - (2 + sim_args.n_ants)
+    BD = BD_o - (2 + sim_args.n_ants)
 
     new_move_tab = []
 
