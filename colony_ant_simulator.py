@@ -9,7 +9,7 @@ from random import choice, randrange, randint
 from coloraide import Color
 from tkinter import *
 import tomllib
-import pandas as pd
+import numpy as np
 
 # Load configuration
 with open("config.toml", mode="rb") as fp:
@@ -145,47 +145,41 @@ class PheromoneMap:
 
     def __init__(self, canvas):
         self.canvas = canvas
-        self.map = pd.DataFrame(
-            dtype=int,
-            columns=['x', 'y', 'qty', 'life']
-        )
+        self.map = np.empty((0,4), int)  # 2D array made of columns: posx, posy, qty, life
         self.pheromones_on_canvas = []
 
     def any_pheromone(self):
         return len(self.map) > 0
     
     def count_pheromones(self):
-        return self.map.qty.sum()
+        return sum(self.map[:, 2])
     
     def add(self, posx, posy, qty, ini_life):
-        self.map = pd.concat([
-            self.map,
-            pd.DataFrame({
-                'x': [posx],
-                'y': [posy],
-                'qty': [qty],
-                'life': [ini_life]
-            })
-        ])
+        self.map = np.append(self.map, [[posx, posy, qty, ini_life]], axis=0)
         return True
     
     def life_decay(self, minus=1):
-        self.map.life = self.map.life - minus
-        self.map.drop(self.map.loc[self.map.life<0].index, inplace=True)  # FIXME: All pheromones are removed at the same time!
+        self.map[:, 3] = self.map[:, 3] - minus
+        self.map = self.map[self.map[:, 3]>0]  # Remove lines which have life <= 0
         return True
 
     def refresh_canvas(self):
         _ = [self.canvas.delete(ph.display) for ph in self.pheromones_on_canvas]
         self.pheromones_on_canvas = []
         if len(self.map) > 0:
-            ph_to_draw = list(pd.unique(self.map.apply(lambda r: (r.x, r.y), axis=1)))
+            ph_to_draw = np.unique(self.map[:, :2], axis=0)
             self.pheromones_on_canvas = [Pheromone(ph[0], ph[1], self.canvas) for ph in ph_to_draw]
     
     def area_count(self, x1, y1, x2, y2):
-        cond_x = ((x1 <= self.map.x) & (self.map.x <= x2)) if x1 < x2 else ((x2 <= self.map.x) & (self.map.x <= x1))
-        cond_y = ((y1 <= self.map.y) & (self.map.y <= y2)) if y1 < y2 else ((y2 <= self.map.y) & (self.map.y <= y1))
-
-        return self.map.loc[cond_x & cond_y, 'qty'].sum()
+        """Sums total amount of pheromones in square defined by the coordinates"""
+        if (x1 < x2) and (y1 < y2):
+            return len(self.map[(self.map[:, 0]>x1) & (self.map[:, 0]<x2) & (self.map[:, 1]>y1) & (self.map[:, 1]<y2)])
+        elif (x2 < x1) and (y1 < y2):
+            return len(self.map[(self.map[:, 0]<x1) & (self.map[:, 0]>x2) & (self.map[:, 1]>y1) & (self.map[:, 1]<y2)])
+        elif (x1 < x2) and (y2 < y1):
+            return len(self.map[(self.map[:, 0]>x1) & (self.map[:, 0]<x2) & (self.map[:, 1]<y1) & (self.map[:, 1]>y2)])
+        else:
+            return len(self.map[(self.map[:, 0]<x1) & (self.map[:, 0]>x2) & (self.map[:, 1]<y1) & (self.map[:, 1]>y2)])
     
 
 
@@ -230,15 +224,19 @@ class Environment:
             1, self.move_forever())
         self.root.mainloop()
 
+
     def move_forever(self):
         self.keep_sim_running = True
         while self.keep_sim_running:
             self.f_move()
+
         print('Application closed.')
         self.root.destroy()
     
+
     def stop_simulation(self):
         self.keep_sim_running = False
+
 
     def f_move(self):
         """Simulates the movements ants
@@ -442,22 +440,22 @@ def find_nest(ant, canvas):
         if not HG > 1:
             new_move_tab += [(-1*STEP_SIZE, 0), (0, -STEP_SIZE), (-1*STEP_SIZE, -1*STEP_SIZE)]
         else:
-            new_move_tab += [(-1*STEP_SIZE, 0), (0, -STEP_SIZE), (-1*STEP_SIZE, -1*STEP_SIZE)] * min(10, HG)
+            new_move_tab += [(-1*STEP_SIZE, 0), (0, -STEP_SIZE), (-1*STEP_SIZE, -1*STEP_SIZE)] * HG
     if HDn == 1:
         if not HD > 1:
             new_move_tab += [(STEP_SIZE, 0), (0, -1*STEP_SIZE), (STEP_SIZE, -1*STEP_SIZE)]
         else:
-            new_move_tab += [(STEP_SIZE, 0), (0, -1*STEP_SIZE), (STEP_SIZE, -1*STEP_SIZE)] * min(10, HD)
+            new_move_tab += [(STEP_SIZE, 0), (0, -1*STEP_SIZE), (STEP_SIZE, -1*STEP_SIZE)] * HD
     if BGn == 1:
         if not BG > 1:
             new_move_tab += [(-1*STEP_SIZE, 0), (0, STEP_SIZE), (-1*STEP_SIZE, STEP_SIZE)]
         else:
-            new_move_tab += [(-1*STEP_SIZE, 0), (0, STEP_SIZE), (-1*STEP_SIZE, STEP_SIZE)] * min(10, BG)
+            new_move_tab += [(-1*STEP_SIZE, 0), (0, STEP_SIZE), (-1*STEP_SIZE, STEP_SIZE)] * BG
     if BDn == 1:
         if not BD > 1:
             new_move_tab += [(STEP_SIZE, 0), (0, STEP_SIZE), (STEP_SIZE, STEP_SIZE)]
         else:
-            new_move_tab += [(STEP_SIZE, 0), (0, STEP_SIZE), (STEP_SIZE, STEP_SIZE)] * min(10, BD)
+            new_move_tab += [(STEP_SIZE, 0), (0, STEP_SIZE), (STEP_SIZE, STEP_SIZE)] * BD
     if len(new_move_tab) > 0:
         return new_move_tab
     return move_tab
@@ -471,29 +469,30 @@ def pheromones_affinity(ant, canvas, pheromone_map):
         return []
     ant_coords = (ant.posx, ant.posy)
 
+    # Could have 1 call to function to return the 4 values...
     HG_o = pheromone_map.area_count(0, 0, ant_coords[0], ant_coords[1])
     HD_o = pheromone_map.area_count(e_w, 0, ant_coords[0], ant_coords[1])
     BG_o = pheromone_map.area_count(0, e_h, ant_coords[0], ant_coords[1])
     BD_o = pheromone_map.area_count(e_w, e_h, ant_coords[0], ant_coords[1])
 
-    HG = HG_o - (2 + sim_args.n_ants)
-    HD = HD_o - (2 + sim_args.n_ants)
-    BG = BG_o - (2 + sim_args.n_ants)
-    BD = BD_o - (2 + sim_args.n_ants)
+    HG = HG_o #- (2 + sim_args.n_ants)
+    HD = HD_o #- (2 + sim_args.n_ants)
+    BG = BG_o #- (2 + sim_args.n_ants)
+    BD = BD_o #- (2 + sim_args.n_ants)
 
     new_move_tab = []
 
     if HG > 1:
-        new_move_tab += [(-1*STEP_SIZE, 0), (0, -1*STEP_SIZE), (-1*STEP_SIZE, -1*STEP_SIZE)] * min(10, HG)
+        new_move_tab += [(-1*STEP_SIZE, 0), (0, -1*STEP_SIZE), (-1*STEP_SIZE, -1*STEP_SIZE)] * HG
 
     if HD > 1:
-        new_move_tab += [(STEP_SIZE, 0), (0, -1*STEP_SIZE), (STEP_SIZE, -1*STEP_SIZE)] * min(10, HD)
+        new_move_tab += [(STEP_SIZE, 0), (0, -1*STEP_SIZE), (STEP_SIZE, -1*STEP_SIZE)] * HD
 
     if BG > 1:
-        new_move_tab += [(-1*STEP_SIZE, 0), (0, STEP_SIZE), (-1*STEP_SIZE, STEP_SIZE)] * min(10, BG)
+        new_move_tab += [(-1*STEP_SIZE, 0), (0, STEP_SIZE), (-1*STEP_SIZE, STEP_SIZE)] * BG
 
     if BD > 1:
-        new_move_tab += [(STEP_SIZE, 0), (0, STEP_SIZE), (STEP_SIZE, STEP_SIZE)] * min(10, BD)
+        new_move_tab += [(STEP_SIZE, 0), (0, STEP_SIZE), (STEP_SIZE, STEP_SIZE)] * BD
 
     return new_move_tab
 
