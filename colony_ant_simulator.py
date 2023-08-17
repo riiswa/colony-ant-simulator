@@ -10,6 +10,7 @@ from coloraide import Color
 from tkinter import *
 import tomllib
 import numpy as np
+import time
 
 # Load configuration
 with open("config.toml", mode="rb") as fp:
@@ -139,7 +140,7 @@ class Pheromone:
 class PheromoneMap:
     """A map of pheromones. Avoids drawing each pheromone on the canvas.
 
-    The dataframe PheromoneMap.map contains the most up to date information about pheromones.
+    The 2-dimensional PheromoneMap.map contains the most up to date information about pheromones.
     The list PheromoneMap.pheromones_on_canvas is a list of pheromones displayed on canvas.
     """
 
@@ -164,14 +165,16 @@ class PheromoneMap:
         return True
 
     def refresh_canvas(self):
+        """Completely erases all pheromones to draw them again"""
         _ = [self.canvas.delete(ph.display) for ph in self.pheromones_on_canvas]
         self.pheromones_on_canvas = []
-        if len(self.map) > 0:
+        if self.any_pheromone():
             ph_to_draw = np.unique(self.map[:, :2], axis=0)
             self.pheromones_on_canvas = [Pheromone(ph[0], ph[1], self.canvas) for ph in ph_to_draw]
     
     def area_count(self, x1, y1, x2, y2):
         """Sums total amount of pheromones in square defined by the coordinates"""
+        # FIXME It doesn't count the number of pheromones because it doesn't sum the quantities
         if (x1 < x2) and (y1 < y2):
             return len(self.map[(self.map[:, 0]>x1) & (self.map[:, 0]<x2) & (self.map[:, 1]>y1) & (self.map[:, 1]<y2)])
         elif (x2 < x1) and (y1 < y2):
@@ -183,7 +186,6 @@ class PheromoneMap:
     
 
 
-
 class Environment:
     """Create the entire environment or a number x of ants will move
     """
@@ -192,6 +194,7 @@ class Environment:
         self.ant_number = ant_number
         self.sim_mode = sim_mode
         self.sim_loop = 0
+        self.max_fps = 24  # 50 <=> 1 image maximum every 0.02s
 
         self.root = Tk()
         self.root.title(f'Ant Colony Simulator (mode: {sim_mode})')
@@ -227,8 +230,14 @@ class Environment:
 
     def move_forever(self):
         self.keep_sim_running = True
+        
         while self.keep_sim_running:
+            self.lastframe_t = time.perf_counter()
+
             self.f_move()
+
+            waiting_time = max(0, 1/self.max_fps - (time.perf_counter() - self.lastframe_t))
+            time.sleep(waiting_time)
 
         print('Application closed.')
         self.root.destroy()
@@ -258,7 +267,7 @@ class Environment:
             print(f"[{self.sim_loop}] All ants have died and the colony didn't survive a tragical famine.\nExiting...")
             self.stop_simulation()
             return None
-        nb_ants_before_famine = len(self.ant_data)
+        nb_ants_before_using_energy = len(self.ant_data)
 
         for ant in self.ant_data:
 
@@ -303,6 +312,8 @@ class Environment:
                     if self.food.life < 1:
                         self.food.replace(self.canvas)
                         self.canvas.itemconfig(self.food.display, fill=get_food_colour(self.food.life))
+                    
+                    # The ant isn't scouting anymore
                     ant.scout_mode = False
                     self.canvas.itemconfig(ant.display, fill=_CONFIG_['graphics']['ant']['notscouting_colour'])
 
@@ -319,10 +330,10 @@ class Environment:
                         ant.set_energy(plus=self.nest.feed_ant(ant))
                         
 
-            else:  # If the ant found the food source
+            else:  # If the ant found the food source and is on the way to the nest
                 # The position of the nest will influence the movements of the ant
                 coord = choice(find_nest(ant, self.canvas))
-                proba = choice([0]*23+[1])
+                proba = choice([0]*23+[1])  # May want to increase this parameter to help ants get back to their food source after delivery? (Or ppheromone persistence?)
                 if proba:
                     self.food_phero_map.add(
                         ant.posx, 
@@ -333,6 +344,7 @@ class Environment:
                 ant.posx += coord[0]
                 ant.posy += coord[1]
                 self.canvas.move(ant.display, coord[0], coord[1])
+
                 # Ant at nest: if there is a collision between a nest and an ant, the ant switches to scout mode
                 if collide(self.canvas, ant) == 1:
                     ant.scout_mode = True
@@ -345,17 +357,15 @@ class Environment:
                     if self.sim_mode == 'reality':
                         ant.set_energy(plus=self.nest.feed_ant(ant))
 
-            if len(self.ant_data)<= 100:
-                self.canvas.update()
+            # if len(self.ant_data)<= 100:
+            #     self.canvas.update()
         
-        nb_ants_died = nb_ants_before_famine - len(self.ant_data)
+        nb_ants_died = nb_ants_before_using_energy - len(self.ant_data)
         if nb_ants_died > 0:
             print(f'[{self.sim_loop}] {nb_ants_died} ants have died of starvation.')
 
         self.food_phero_map.refresh_canvas()  # Refresh pheromones displayed
-
-        if len(self.ant_data) > 100:
-            self.canvas.update()
+        self.canvas.update()
         
         # Refresh status bar
         if len(self.ant_data)>0:
@@ -365,7 +375,7 @@ class Environment:
         
         self.status_vars[0].set(f'Sim loop {self.sim_loop}')
         self.status_vars[1].set(f'Ants: {len(self.ant_data)}')
-        self.status_vars[2].set(f'Energy/ant: {avg_energy:.2f}')
+        self.status_vars[2].set(f'Avg energy/ant: {avg_energy:.2f}')
         self.status_vars[3].set(f'Food reserve: {self.nest.food_storage:.2f}')
         self.status_vars[4].set(f'Unpicked food: {self.food.life}')
         self.status_vars[5].set(f'Pheromones: {self.food_phero_map.count_pheromones()}')
