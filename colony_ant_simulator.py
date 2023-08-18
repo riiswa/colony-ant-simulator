@@ -93,12 +93,32 @@ class Ant:
         self.posy = nest.posy
         self.display = circle(self.posx, self.posy, _CONFIG_['graphics']['ant']['radius'], self.canvas, _CONFIG_['graphics']['ant']['scouting_colour'])
         self.scout_mode = True # at birth the ant is in a search mode
-        self.energy = _CONFIG_['ant']['ini_energy']
+        self.set_energy(_CONFIG_['ant']['ini_energy'])
     
     def remove_from_display(self):
         """ Delete the ant from the canvas.
         """
         self.canvas.delete(self.display)
+    
+    def set_energy(self, value=0, minus=0, plus=0):
+        if value != 0:
+            self.energy = value
+        elif minus != 0:
+            self.energy -= minus
+        elif plus != 0:
+            self.energy += plus
+        self.update_colour()
+    
+    def update_colour(self):
+        if self.scout_mode:
+            if self.energy >= 5:
+                self.canvas.itemconfig(self.display, fill=_CONFIG_['graphics']['ant']['scouting_colour'])
+            elif self.energy >= 2:
+                self.canvas.itemconfig(self.display, fill=_CONFIG_['graphics']['ant']['scouting_lowhealth_colour'])
+            else:
+                self.canvas.itemconfig(self.display, fill=_CONFIG_['graphics']['ant']['scouting_criticalhealth_colour'])
+        else:
+            self.canvas.itemconfig(self.display, fill=_CONFIG_['graphics']['ant']['notscouting_colour'])
 
 
 class Pheromone:
@@ -126,7 +146,7 @@ class Environment:
         self.sim_loop = 0
 
         self.root = Tk()
-        self.root.title("Ant Colony Simulator")
+        self.root.title(f'Ant Colony Simulator (mode: {sim_mode})')
         self.root.bind("<Escape>", lambda quit: self.root.destroy())
 
         self.environment = Canvas(
@@ -170,7 +190,8 @@ class Environment:
                 pheromones.remove(pheromone)
 
         # New ants generated if enough food reserves
-        if self.nest.food_storage > _CONFIG_['ant']['energy_to_create_new_ant']:
+        if (self.nest.food_storage > _CONFIG_['ant']['energy_to_create_new_ant']) \
+            & (self.sim_mode == 'reality'):
             number_new_ants = int(self.nest.food_storage // _CONFIG_['ant']['energy_to_create_new_ant'])
             self.ant_data = self.ant_data + [Ant(self.nest, self.environment) for i in range(number_new_ants)]
             self.nest.food_storage -= number_new_ants * _CONFIG_['ant']['energy_to_create_new_ant']
@@ -185,8 +206,8 @@ class Environment:
         for ant in self.ant_data:
 
             # Ant energy depletes if simulation mode = reality
-            if sim_args.mode == 'reality':
-                ant.energy -= 0.01
+            if self.sim_mode == 'reality':
+                ant.set_energy(minus=0.01)
                 if ant.energy <= 0:
                     ant.remove_from_display()
                     self.ant_data = [an_ant for an_ant in self.ant_data if an_ant is not ant]
@@ -218,7 +239,8 @@ class Environment:
                     # with each collision between an ant and a food source, its life expectancy decreases by 1
                     self.food.life -= 1
                     self.environment.itemconfig(self.food.display, fill=get_food_colour(self.food.life))
-                    ant.energy = _CONFIG_['ant']['ini_energy']
+                    if self.sim_mode == 'reality':
+                        ant.set_energy(_CONFIG_['ant']['ini_energy'])
 
                     # If the food source has been consumed, a new food source is replaced
                     if self.food.life < 1:
@@ -232,7 +254,8 @@ class Environment:
                         for i in range(_CONFIG_['pheromone']['qty_ph_upon_foodfind'])]
                 
                 elif collision == 1: # Collision with nest => Maybe the ant is hungry
-                    ant.energy += self.nest.feed_ant(ant)
+                    if self.sim_mode == 'reality':
+                        ant.set_energy(plus=self.nest.feed_ant(ant))
                         
 
             else:  # If the ant found the food source
@@ -253,7 +276,8 @@ class Environment:
                     self.nest.food_storage += 1
 
                     # Ant eats energy from the nest
-                    ant.energy += self.nest.feed_ant(ant)
+                    if self.sim_mode == 'reality':
+                        ant.set_energy(plus=self.nest.feed_ant(ant))
 
             if len(self.ant_data)<= 100:
                 self.environment.update()
@@ -347,22 +371,22 @@ def find_nest(ant, canvas):
         if not HG > 1:
             new_move_tab += [(-1*STEP_SIZE, 0), (0, -STEP_SIZE), (-1*STEP_SIZE, -1*STEP_SIZE)]
         else:
-            new_move_tab += [(-1*STEP_SIZE, 0), (0, -STEP_SIZE), (-1*STEP_SIZE, -1*STEP_SIZE)] * HG
+            new_move_tab += [(-1*STEP_SIZE, 0), (0, -STEP_SIZE), (-1*STEP_SIZE, -1*STEP_SIZE)] * min(10, HG)
     if HDn == 1:
         if not HD > 1:
             new_move_tab += [(STEP_SIZE, 0), (0, -1*STEP_SIZE), (STEP_SIZE, -1*STEP_SIZE)]
         else:
-            new_move_tab += [(STEP_SIZE, 0), (0, -1*STEP_SIZE), (STEP_SIZE, -1*STEP_SIZE)] * HD
+            new_move_tab += [(STEP_SIZE, 0), (0, -1*STEP_SIZE), (STEP_SIZE, -1*STEP_SIZE)] * min(10, HD)
     if BGn == 1:
         if not BG > 1:
             new_move_tab += [(-1*STEP_SIZE, 0), (0, STEP_SIZE), (-1*STEP_SIZE, STEP_SIZE)]
         else:
-            new_move_tab += [(-1*STEP_SIZE, 0), (0, STEP_SIZE), (-1*STEP_SIZE, STEP_SIZE)] * BG
+            new_move_tab += [(-1*STEP_SIZE, 0), (0, STEP_SIZE), (-1*STEP_SIZE, STEP_SIZE)] * min(10, BG)
     if BDn == 1:
         if not BD > 1:
             new_move_tab += [(STEP_SIZE, 0), (0, STEP_SIZE), (STEP_SIZE, STEP_SIZE)]
         else:
-            new_move_tab += [(STEP_SIZE, 0), (0, STEP_SIZE), (STEP_SIZE, STEP_SIZE)] * BD
+            new_move_tab += [(STEP_SIZE, 0), (0, STEP_SIZE), (STEP_SIZE, STEP_SIZE)] * min(10, BD)
     if len(new_move_tab) > 0:
         return new_move_tab
     return move_tab
@@ -387,16 +411,16 @@ def pheromones_affinity(ant, canvas):
     new_move_tab = []
 
     if HG > 1:
-        new_move_tab += [(-1*STEP_SIZE, 0), (0, -1*STEP_SIZE), (-1*STEP_SIZE, -1*STEP_SIZE)] * HG
+        new_move_tab += [(-1*STEP_SIZE, 0), (0, -1*STEP_SIZE), (-1*STEP_SIZE, -1*STEP_SIZE)] * min(10, HG)
 
     if HD > 1:
-        new_move_tab += [(STEP_SIZE, 0), (0, -1*STEP_SIZE), (STEP_SIZE, -1*STEP_SIZE)] * HD
+        new_move_tab += [(STEP_SIZE, 0), (0, -1*STEP_SIZE), (STEP_SIZE, -1*STEP_SIZE)] * min(10, HD)
 
     if BG > 1:
-        new_move_tab += [(-1*STEP_SIZE, 0), (0, STEP_SIZE), (-1*STEP_SIZE, STEP_SIZE)] * BG
+        new_move_tab += [(-1*STEP_SIZE, 0), (0, STEP_SIZE), (-1*STEP_SIZE, STEP_SIZE)] * min(10, BG)
 
     if BD > 1:
-        new_move_tab += [(STEP_SIZE, 0), (0, STEP_SIZE), (STEP_SIZE, STEP_SIZE)] * BD
+        new_move_tab += [(STEP_SIZE, 0), (0, STEP_SIZE), (STEP_SIZE, STEP_SIZE)] * min(10, BD)
 
     return new_move_tab
 
@@ -409,8 +433,8 @@ if __name__ == "__main__":
         )
         parser.add_argument('n_ants', type=int, nargs='?', default=randint(10, 100), 
                             help='Number of ants (recommended: 10-100; default: random number between 10 and 100)')
-        parser.add_argument('-m', dest='mode', nargs='?', default='basic', choices=['basic', 'reality'],
-                            help='Simulation mode (default: "basic")')
+        parser.add_argument('-m', dest='mode', nargs='?', default='theory', choices=['theory', 'reality'],
+                            help='Simulation mode (default: "theory")')
         sim_args = parser.parse_args()
 
         Environment(sim_args.n_ants, sim_args.mode)

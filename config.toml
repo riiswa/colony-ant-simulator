@@ -8,7 +8,6 @@ width = 500
 height = 500
 
 [nest]
-
 ini_foodqty = 49
 
 [pheromone]
@@ -17,9 +16,11 @@ qty_ph_upon_foodfind = 30
 
 [graphics]
 ant.radius = 2
-ant.scouting_colour = "#AF0220"
-ant.notscouting_colour = "#3BC302"
-environment.backgroundcolour = "#F4F2F0" # Dark mode: "#000028"
+ant.scouting_colour = "#3BC302"  # Other option: "#AF0220"
+ant.scouting_lowhealth_colour = "#FFC000"
+ant.scouting_criticalhealth_colour = "#C00000"
+ant.notscouting_colour = "#5B9BD5"  # Other option: "#3BC302"
+environment.backgroundcolour = "#F4F2F0"  # Dark mode: "#000028"
 food.ini_colour = "#00C8C8"
 nest.radius = 20
 nest.colour = "#F27E1D"

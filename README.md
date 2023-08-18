@@ -17,16 +17,36 @@ The objective of this program is to reproduce in Python3 an algorithm that simul
 
 ## How to use
 
+The simplest way - by default on "theory" mode:
 ```bash
 python colony_ant_simulator.py
 ```
+Use "reality" mode:
+```bash
+python colony_ant_simulator.py -m reality
+```
 
-## Screenshot
+Get help with option -h:
+```bash
+usage: Colony ant simulator [-h] [-m [{theory,reality}]] [n_ants]
 
-![Screenshot](screenshot.gif)
+Simulation of ants colony in python.
 
-## Notes
+positional arguments:
+  n_ants                Number of ants (recommended: 10-100; default: random number between 10 and 100)
 
--   This project requires `Tinker
+options:
+  -h, --help            show this help message and exit
+  -m [{theory,reality}]
+                        Simulation mode (default: "theory")
+```
 
-Require Python3.11
+## Screenshots
+
+![Screenshot](assets/screenshot.gif)
+![Screenshot](assets/screenshot2.png)
+
+## Requirements
+
+- Python 3.11
+- coloraide
