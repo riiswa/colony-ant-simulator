@@ -37,13 +37,10 @@ You can switch to "Reality" mode with the following command, think of "Reality" 
 python3 colony_ant_simulator.py -m reality
 ```
 
-> **ⓘ Note**\
-> As far as I am aware there is no way to use this command.
-
-For help with the options use the -h:
+For help with the options use the -h flag:
 
 ```bash
-usage: Colony ant simulator [-h] [-m [{theory,reality}]] [n_ants]
+usage: python3 colony_ant_simulator.py [-h] [-m [{theory,reality}]] [n_ants]
 
 Simulation of ants colony in python.
 
