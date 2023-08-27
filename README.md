@@ -1,8 +1,16 @@
-# Colony Ant Simulator
+# 🐜 Colony Ant Simulator
 
 This is a program designed to simulate the behavior of ants using Python 3.
 
-## Explanation of Ants' behaviour.
+## 📖 Overview
+
+- Simulation Modes: The program offers two simulation modes: "theory" and "reality." In the "reality" mode, ants consume energy, and new ants are generated if there is enough food.
+
+-Movement and Energy: Ants move based on predefined movement patterns and have energy levels. Ants lose energy over time, and their movement is influenced by their energy.
+
+-Ant Behavior Simulation: The program simulates the behavior of ants in an environment, where ants move around randomly, search for food, and return to the nest.
+
+## 🐜 Explanation of Ants' behaviour.
 
 ### An ant (Referred to as a "Scout") travels more or less at random around the colony;
 
@@ -15,7 +23,7 @@ This is a program designed to simulate the behavior of ants using Python 3.
      - Over time, the pheromones on the long path evaporate, causing it to disappear.
      - Eventually, ants only will use the shortest path.
 
-## Running the Program, and Setting Parameters.
+## ⚙️ Running the Program, and Setting Parameters.
 
 > **ⓘ Note**\
 > At the moment this program can't run, it seems that the current dependencies prevent the program from launching.
@@ -52,14 +60,14 @@ options:
   -m [{theory,reality}] Simulation mode (default: "theory")
 ```
 
-## Screenshots
+## 📸 Screenshots
 
 The Algorithm in action:
 
 ![Screenshot](assets/screenshot.gif)
 ![Screenshot](assets/screenshot2.png)
 
-## Prerequisites
+## 🛠️  Prerequisites
 
 - [Python 3.11](https://www.python.org/downloads/)
 - Coloraide, install with the command `pip install coloraide`
