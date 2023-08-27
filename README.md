@@ -17,13 +17,16 @@ A program created to simulate ants' behaviour in Python 3
 
 ## Launching the program, and program parameters. 
 
+> **ⓘ Note**\
+> As of now with the current code (?) , and Dependencies, It seems this program can't run.
+
 The simplest method of launching is by executing the command below, by default the game will launch in "Theory" Mode
 ```bash
-python colony_ant_simulator.py
+python3 colony_ant_simulator.py
 ```
 Use "reality" mode:
 ```bash
-python colony_ant_simulator.py -m reality
+python3 colony_ant_simulator.py -m reality
 ```
 
 Get help with option -h:
@@ -50,3 +53,5 @@ options:
 
 - [Python 3.11](https://www.python.org/downloads/)
 - Coloraide, install with the command `pip install coloraide`
+- Tkinter, install with the command `sudo apt-get install python3-tk` (Sorry non-Ubuntu people!)
+- Tomllib, install with the command `pip install tomllib` (Unable to install)
