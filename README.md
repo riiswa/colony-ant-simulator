@@ -20,16 +20,28 @@ This is a program designed to simulate the behavior of ants using Python 3.
 > **ⓘ Note**\
 > At the moment this program can't run, it seems that the current dependencies prevent the program from launching.
 
+To Install the program, use the following command.
+```bash
+git clone https://github.com/riiswa/colony-ant-simulator
+cd ~/colony-ant-simulator/
+
+```
 To launch the program, use the following command. By default, the game starts in "Theory" mode, think of it as "Arcade" mode:
+
 ```bash
 python3 colony_ant_simulator.py
 ```
 You can switch to "Reality" mode with the following command, think of "Reality" mode as "Realism" mode:
+
 ```bash
 python3 colony_ant_simulator.py -m reality
 ```
 
+> **ⓘ Note**\
+> As far as I am aware there is no way to use this command.
+
 For help with the options use the -h:
+
 ```bash
 usage: Colony ant simulator [-h] [-m [{theory,reality}]] [n_ants]
 
