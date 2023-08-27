@@ -1,35 +1,35 @@
 # Colony Ant Simulator
 
-A program created to simulate ants' behaviour in Python 3
+This is a program designed to simulate the behavior of ants using Python 3.
 
-## Explanation of ants' behaviour.
+## Explanation of Ants' behaviour.
 
-### An ant (called a "scout") travels more or less at random around the colony;
+### An ant (Referred to as a "Scout") travels more or less at random around the colony;
 
 - If the scout discovers a food source it returns more or less directly to the nest, leaving a trail of pheromones on it's way;
-     - These pheromones being attractive, ants passing nearby will tend to follow, in a more or less direct way, this trail;
-     - When the scouts return to the nest, these same ants will strengthen the trail.
+     - These pheromones attract other ants, causing them to follow the trail;
+     - When ants return to the nest they reinforce the trail with more pheromones.
 
-- If two trails are possible to reach the same food source, the shortest one will be covered by more scouts than the long track;
-     - Hence the short track will be more and more reinforced, and therefore more and more attractive;
-     - The long track will eventually disappear, as pheromones are volatile;
-     - In the long term, all ants have determined and "chosen" the shortest track.
+- When two paths lead to the same food source, the shorter one is used by more scouts compared to the longer path.
+     - This causes the short path to become increasingly reinforced and attractive.
+     - Over time, the pheromones on the long path evaporate, causing it to disappear.
+     - Eventually, ants only will use the shortest path.
 
-## Launching the program, and program parameters. 
+## Running the Program, and Setting Parameters.
 
 > **ⓘ Note**\
-> As of now with the current code (?) , and Dependencies, It seems this program can't run.
+> At the moment this program can't run, it seems that the current dependencies prevent the program from launching.
 
-The simplest method of launching is by executing the command below, by default the game will launch in "Theory" Mode
+To launch the program, use the following command. By default, the game starts in "Theory" mode, think of it as "Arcade" mode:
 ```bash
 python3 colony_ant_simulator.py
 ```
-Use "reality" mode:
+You can switch to "Reality" mode with the following command, think of "Reality" mode as "Realism" mode:
 ```bash
 python3 colony_ant_simulator.py -m reality
 ```
 
-Get help with option -h:
+For help with the options use the -h:
 ```bash
 usage: Colony ant simulator [-h] [-m [{theory,reality}]] [n_ants]
 
@@ -39,14 +39,15 @@ positional arguments:
   n_ants                Number of ants (recommended: 10-100; default: random number between 10 and 100)
 
 options:
-  -h, --help            show this help message and exit
-  -m [{theory,reality}]
-                        Simulation mode (default: "theory")
+  -h, --help            Show this help message and exit
+  -m [{theory,reality}] Simulation mode (default: "theory")
 ```
 
 ## Screenshots
 
-![Screenshot](assets/screenshot.gif)an algorithm
+The Algorithm in action:
+
+![Screenshot](assets/screenshot.gif)
 ![Screenshot](assets/screenshot2.png)
 
 ## Prerequisites
