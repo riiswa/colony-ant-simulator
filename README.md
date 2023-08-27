@@ -1,23 +1,23 @@
-# colony-ant-simulator
+# Colony Ant Simulator
 
-Simulation of ants colony in python
+A program created to simulate ants' behaviour in Python 3
 
-## Explanation of ants' behaviour
+## Explanation of ants' behaviour.
 
--   an ant (called a "scout") travels more or less at random around the colony;
--   if she discovers a food source she returns more or less directly to the nest, leaving a track of pheromones on her way;
--   these pheromones being attractive, ants passing nearby will tend to follow, in a more or less direct way, this track;
--   when they return to the nest, these same ants will strengthen the track;
--   if two tracks are possible to reach the same food source, the shortest one will be covered by more ants at the same time than the long track;
--   the short track will therefore be more and more reinforced, and therefore more and more attractive;
--   the long track, it will eventually disappear, as pheromones are volatile;
--   in the long term, all ants have therefore determined and "chosen" the shortest track.
+### An ant (called a "scout") travels more or less at random around the colony;
 
-The objective of this program is to reproduce in Python3 an algorithm that simulates ants' behaviour.
+- If the scout discovers a food source it returns more or less directly to the nest, leaving a trail of pheromones on it's way;
+     - These pheromones being attractive, ants passing nearby will tend to follow, in a more or less direct way, this trail;
+     - When the scouts return to the nest, these same ants will strengthen the trail.
 
-## How to use
+- If two trails are possible to reach the same food source, the shortest one will be covered by more scouts than the long track;
+     - Hence the short track will be more and more reinforced, and therefore more and more attractive;
+     - The long track will eventually disappear, as pheromones are volatile;
+     - In the long term, all ants have determined and "chosen" the shortest track.
 
-The simplest way - by default on "theory" mode:
+## Launching the program, and program parameters. 
+
+The simplest method of launching is by executing the command below, by default the game will launch in "Theory" Mode
 ```bash
 python colony_ant_simulator.py
 ```
@@ -43,10 +43,10 @@ options:
 
 ## Screenshots
 
-![Screenshot](assets/screenshot.gif)
+![Screenshot](assets/screenshot.gif)an algorithm
 ![Screenshot](assets/screenshot2.png)
 
-## Requirements
+## Prerequisites
 
-- Python 3.11
-- coloraide
+- [Python 3.11](https://www.python.org/downloads/)
+- Coloraide, install with the command `pip install coloraide`
