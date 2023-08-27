@@ -6,14 +6,14 @@ This is a program designed to simulate the behavior of ants using Python 3.
 
 - Simulation Modes: The program offers two simulation modes: "theory" and "reality." In the "reality" mode, ants consume energy, and new ants are generated if there is enough food.
 
--Movement and Energy: Ants move based on predefined movement patterns and have energy levels. Ants lose energy over time, and their movement is influenced by their energy.
+- Movement and Energy: Ants move based on predefined movement patterns and have energy levels. Ants lose energy over time, and their movement is influenced by their energy.
 
--Ant Behavior Simulation: The program simulates the behavior of ants in an environment, where ants move around randomly, search for food, and return to the nest.
+- Ant Behavior Simulation: The program simulates the behavior of ants in an environment, where ants move around randomly, search for food, and return to the nest.
 
 ## 🐜 Explanation of the Ants' behaviour.
 
-- If the scout (or ant) discovers a food source it returns somewhat directly to the nest, leaving a trail of pheromones on it's way;
-     - These pheromones attract other ants, causing them to follow the trail;
+- If the scout (also refered to as an ant) discovers a food source, it returns somewhat directly to the nest, leaving a trail of pheromones on it's way
+     - These pheromones attract other ants, causing them to follow the trail
      - When ants return to the nest they reinforce the trail with more pheromones.
 
 - When two paths lead to the same food source, the shorter one is used by more scouts compared to the longer path.
