@@ -10,18 +10,16 @@ This is a program designed to simulate the behavior of ants using Python 3.
 
 -Ant Behavior Simulation: The program simulates the behavior of ants in an environment, where ants move around randomly, search for food, and return to the nest.
 
-## 🐜 Explanation of Ants' behaviour.
+## 🐜 Explanation of the Ants' behaviour.
 
-### An ant (Referred to as a "Scout") travels more or less at random around the colony;
-
-- If the scout discovers a food source it returns more or less directly to the nest, leaving a trail of pheromones on it's way;
+- If the scout (or ant) discovers a food source it returns somewhat directly to the nest, leaving a trail of pheromones on it's way;
      - These pheromones attract other ants, causing them to follow the trail;
      - When ants return to the nest they reinforce the trail with more pheromones.
 
 - When two paths lead to the same food source, the shorter one is used by more scouts compared to the longer path.
      - This causes the short path to become increasingly reinforced and attractive.
      - Over time, the pheromones on the long path evaporate, causing it to disappear.
-     - Eventually, ants only will use the shortest path.
+     - Eventually, ants will only use the shortest path.
 
 ## ⚙️ Running the Program, and Setting Parameters.
 
