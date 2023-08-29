@@ -11,7 +11,7 @@ height = 500
 ini_foodqty = 49
 
 [pheromone]
-persistence = 30
+persistence = 100
 qty_ph_upon_foodfind = 30
 
 [graphics]
