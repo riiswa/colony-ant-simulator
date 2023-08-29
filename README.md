@@ -1,34 +1,52 @@
-# colony-ant-simulator
+# 🐜 Colony Ant Simulator
 
-Simulation of ants colony in python
+This is a program designed to simulate the behavior of ants using Python 3.
 
-## Explanation of ants' behaviour
+## 📖 Overview
 
--   an ant (called a "scout") travels more or less at random around the colony;
--   if she discovers a food source she returns more or less directly to the nest, leaving a track of pheromones on her way;
--   these pheromones being attractive, ants passing nearby will tend to follow, in a more or less direct way, this track;
--   when they return to the nest, these same ants will strengthen the track;
--   if two tracks are possible to reach the same food source, the shortest one will be covered by more ants at the same time than the long track;
--   the short track will therefore be more and more reinforced, and therefore more and more attractive;
--   the long track, it will eventually disappear, as pheromones are volatile;
--   in the long term, all ants have therefore determined and "chosen" the shortest track.
+- Simulation Modes: The program offers two simulation modes: "theory" and "reality." In the "reality" mode, ants consume energy, and new ants are generated if there is enough food.
 
-The objective of this program is to reproduce in Python3 an algorithm that simulates ants' behaviour.
+- Movement and Energy: Ants move based on predefined movement patterns and have energy levels. Ants lose energy over time, and their movement is influenced by their energy.
 
-## How to use
+- Ant Behavior Simulation: The program simulates the behavior of ants in an environment, where ants move around randomly, search for food, and return to the nest.
 
-The simplest way - by default on "theory" mode:
+## 🐜 Explanation of the Ants' behaviour.
+
+- If the scout (also refered to as an ant) discovers a food source, it returns somewhat directly to the nest, leaving a trail of pheromones on it's way
+     - These pheromones attract other ants, causing them to follow the trail
+     - When ants return to the nest they reinforce the trail with more pheromones.
+
+- When two paths lead to the same food source, the shorter one is used by more scouts compared to the longer path.
+     - This causes the short path to become increasingly reinforced and attractive.
+     - Over time, the pheromones on the long path evaporate, causing it to disappear.
+     - Eventually, ants will only use the shortest path.
+
+## ⚙️ Running the Program, and Setting Parameters.
+
+> **ⓘ Note**\
+> At the moment this program can't run, it seems that the current dependencies prevent the program from launching.
+
+To Install the program, use the following command.
 ```bash
-python colony_ant_simulator.py
+git clone https://github.com/riiswa/colony-ant-simulator
+cd ~/colony-ant-simulator/
+
 ```
-Use "reality" mode:
+To launch the program, use the following command. By default, the game starts in "Theory" mode, think of it as "Arcade" mode:
+
 ```bash
-python colony_ant_simulator.py -m reality
+python3 colony_ant_simulator.py
+```
+You can switch to "Reality" mode with the following command, think of "Reality" mode as "Realism" mode:
+
+```bash
+python3 colony_ant_simulator.py -m reality
 ```
 
-Get help with option -h:
+For help with the options use the -h flag:
+
 ```bash
-usage: Colony ant simulator [-h] [-m [{theory,reality}]] [n_ants]
+usage: python3 colony_ant_simulator.py [-h] [-m [{theory,reality}]] [n_ants]
 
 Simulation of ants colony in python.
 
@@ -36,17 +54,19 @@ positional arguments:
   n_ants                Number of ants (recommended: 10-100; default: random number between 10 and 100)
 
 options:
-  -h, --help            show this help message and exit
-  -m [{theory,reality}]
-                        Simulation mode (default: "theory")
+  -h, --help            Show this help message and exit
+  -m [{theory,reality}] Simulation mode (default: "theory")
 ```
 
-## Screenshots
+## 📸 Screenshots
+
+The Algorithm in action:
 
 ![Screenshot](assets/screenshot.gif)
 ![Screenshot](assets/screenshot2.png)
 
-## Requirements
+## 🛠️  Prerequisites
 
-- Python 3.11
-- coloraide
+- [Python 3.11](https://www.python.org/downloads/)
+- Coloraide, install with the command `pip install coloraide`
+- Tkinter, install with the command `sudo apt-get install python3-tk` 
