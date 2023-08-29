@@ -68,5 +68,5 @@ The Algorithm in action:
 ## 🛠️  Prerequisites
 
 - [Python 3.11](https://www.python.org/downloads/)
-- Coloraide, install with the command `pip install coloraide`
-- Tkinter, install with the command `sudo apt-get install python3-tk` 
+- [Tkinter](https://tkdocs.com/tutorial/install.html)
+- Instal dependencies with `pip install -r requirements.txt`
